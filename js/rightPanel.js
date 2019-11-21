@@ -1,14 +1,19 @@
+$('#consoleArrow').hide();
+$('#rightArrow').hide();
 var timer;
 // mouse is hovered over right area
 $('#rightContainer').on('mouseenter', function () {
+    $('#rightArrow').fadeIn(100);
     var that = this;
     // mouse hovered over for 500ms
     timer = setTimeout(function () {
         $(that).css('right', 0);
         clearTimeout(timer);
+        $('#rightArrow').addClass('noDisplay');
     }, 500);
 }).on('mouseleave', function () {
     // mouse left right area
+    $('#rightArrow').fadeOut(100);
     // reset timer
     clearTimeout(timer);
 });
@@ -19,6 +24,7 @@ $(document).on('click', function (e) {
     if (!$(e.target).is('#rightContainer') && !$('#rightContainer').has(e.target).length && !$('#delete-menu').has(e.target).length) {
         // hide
         $('#rightContainer').css('right', '-28%');
+        $('#rightArrow').removeClass('noDisplay');
     }
 });
 
@@ -81,10 +87,16 @@ $('#consoleContainer').on('click', function() {
     if (consoleShown) {
         $(this).css('height', ' 1vh');
         consoleShown = false; 
+        $('#consoleArrow').toggleClass('upsideDown');
     } else {
         $(this).css('height', ' 10vh');
         consoleShown = true; 
+        $('#consoleArrow').toggleClass('upsideDown');
     }
+}).on('mouseenter', function () {
+    $('#consoleArrow').fadeIn(100);
+}).on('mouseleave', function () {
+    $('#consoleArrow').fadeOut(100);
 });
 
 $('#console').on('update', function() {

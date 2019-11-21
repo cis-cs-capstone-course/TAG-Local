@@ -276,7 +276,6 @@ img, #logoContainer {
 }
 
 #rightContainer:hover {
-  box-shadow: 0 0 10px white;
   overflow: overlay;
 }
 
