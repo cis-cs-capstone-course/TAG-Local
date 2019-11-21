@@ -44,19 +44,12 @@ $('#trainCurrent').on('click', function () {
     };
     // replace with annotate all
     // try app
-    let pyReturn = launchPy(pyScript, options).then(function () {
-        // try local
-        if (!pyReturn) {
-            pyReturn = launchPy(pyScriptLocal, options);
-        }
-    }).then(function () {
-        // still didn't work
-        if (!pyReturn) {
-            alert('Something went wrong');
-            return -1;
-        }
-        // do something with data
-        alert("!");
+    launchPy(pyScript, options).then(function (data) {
+        pyReturn = data;
+        alert('!')
+        next()
+    }).catch(function () {
+
     });
 });
 
@@ -99,24 +92,39 @@ $('#annotateBtn').on('click', function () {
 launchPy = function (file, options = null) {
     return new Promise(function (resolve, reject) {
         $(document.body).css('cursor', 'wait');
+        console.log('Attempting to Lanuch "' + file + '"');
         var pyshell = new PythonShell.PythonShell(file, options);
 
         var returned = [];
+        var toLog = [];
+        var timer = Date.now()
         pyshell.on('message', function (message) {
             // received a message sent from the Python script (a simple "print" statement)
-            pushToConsole(message);
+            console.log(message);
+            toLog.push(message);
             returned.push(message);
+
+            if (Date.now() - timer > 500) {
+                do {
+                    pushToConsole(toLog.shift(), 100);
+                } while (toLog.length > 0);
+                timer = Date.now();
+            }
         });
 
         // end the input stream and allow the process to exit
         pyshell.end(function (err) {
+            do {
+                pushToConsole(toLog.shift(), 100);
+            } while (toLog.length > 0);
             $(document.body).css('cursor', 'default');
             if (err) {
                 console.log('Error: "' + err + '"');
                 reject();
+            } else {
+                console.log('finished');
+                resolve(returned);
             }
-            console.log('finished');
-            resolve(returned);
         });
     });
 }
@@ -126,8 +134,8 @@ pushToConsole = function (string, limit = 0) {
     $('#console').scrollTop($('#console').prop('scrollHeight'));
 
     if (limit > 0) {
-        while ($('#console').children().length > limit) {
-            $('#console').find('li').remove();
+        while ($('#console').children().length - limit > 0) {
+            $('#console').find(':first-child').remove();
         }
     }
 }
