@@ -76,20 +76,24 @@ $('#annotateBtn').on('click', function () {
     launchPy(pyScript, options).then(function (data) {
         pyReturn = data;
         alert('!')
+        next()
     }).catch(function () {
         launchPy(pyScriptLocal, options).then(function (data) {
             pyReturn = data;
             alert('!!')
-        }).catch(function() {
+            next();
+        }).catch(function () {
             // still didn't work
             if (!pyReturn) {
                 alert('Something went wrong');
                 return -1;
             }
-            // do something with data
-            alert("!");
         });
     });
+
+    next = function () {
+        console.log(pyReturn);
+    }
 });
 
 launchPy = function (file, options = null) {
@@ -100,7 +104,7 @@ launchPy = function (file, options = null) {
         var returned = [];
         pyshell.on('message', function (message) {
             // received a message sent from the Python script (a simple "print" statement)
-            console.log(message);
+            pushToConsole(message);
             returned.push(message);
         });
 
@@ -115,6 +119,17 @@ launchPy = function (file, options = null) {
             resolve(returned);
         });
     });
+}
+
+pushToConsole = function (string, limit = 0) {
+    $('#console').append($('<li>').text(string))
+    $('#console').scrollTop($('#console').prop('scrollHeight'));
+
+    if (limit > 0) {
+        while ($('#console').children().length > limit) {
+            $('#console').find('li').remove();
+        }
+    }
 }
 
 String.prototype.truncStart = function (n, truncAfterWord = false) {

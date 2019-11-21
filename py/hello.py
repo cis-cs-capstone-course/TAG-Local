@@ -1,8 +1,7 @@
 import sys
 
-print("\n".join(sys.argv))
+print(" ".join(sys.argv))
 
-for i in range(23):
-    print('Hello from Python!')
-    print('Hello from Python2!')
+for i in range(2399):
+    print('Hello from Python!' + str(i))
 sys.stdout.flush()

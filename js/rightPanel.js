@@ -75,3 +75,20 @@ $('#recent').on('contextmenu', function(e) {
             left: e.pageX + 'px'
         });
 });
+
+var consoleShown = false;
+$('#consoleContainer').on('click', function() {
+    if (consoleShown) {
+        $(this).css('height', ' 1vh');
+        consoleShown = false; 
+    } else {
+        $(this).css('height', ' 10vh');
+        consoleShown = true; 
+    }
+});
+
+$('#console').on('update', function() {
+    while ($(this).children().length > 100) {
+        $(this).find('li:first').remove();
+    }
+});

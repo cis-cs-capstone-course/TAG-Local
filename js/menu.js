@@ -8,7 +8,7 @@ $('#logo').on('click', function (e) {
         left: $(this).position().left,
         'min-width': $(this).width()
     });
-    delete_menu.append('<h6 class="main">Which?</h6><hr style="margin: 0;">')
+    delete_menu.append('<h6 class="main">TAG</h6><hr style="margin: 0;">')
         .append('<li class="fullscreenToggle" style="font-weight: bold;">Toggle Fullscreen</li>')
         .append('<li class="minimize" style="font-weight: bold;">Minimize</li>')
         .append('<li class="exit" style="font-weight: bold;">Exit</li>')

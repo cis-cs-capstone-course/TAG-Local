@@ -4,6 +4,41 @@
 <head>
     <link href="css/styles.css" rel="stylesheet">
     <link href="css/highlight.css" rel="stylesheet">
+    <style>
+        #consoleContainer {
+            position: absolute;
+            margin: -2em;
+            bottom: 2em;
+            width: 100%;
+            height: 1vh;
+            transition: height 0.3s ease;
+            cursor: pointer;
+        }
+
+        #console {
+            position: absolute;
+            bottom: 0;
+            margin: 0;
+            width: calc(100% - 4em);
+            height: 100%;
+            background-color: black;
+            color: lime;
+            padding: 0 2em 1em 2em;
+            font-size: 14px;
+            overflow-y: scroll;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        #console::-webkit-scrollbar {
+            display: none;
+        }
+
+        #console li {
+            list-style-type: none;
+            padding-left: 1em;
+            text-indent: -1em;
+        }
+    </style>
 </head>
 
 <body>
@@ -91,7 +126,9 @@
                 <hr>
         </div>
         <div id='anno-list'></div>
-    </div>
+        <div id=consoleContainer>
+            <ul id='console'></ul>
+        </div>
     </div>
 
     <!-- No display -->
