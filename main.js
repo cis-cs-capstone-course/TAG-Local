@@ -10,6 +10,7 @@ let mainWindow
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
+    icon: './tag.ico',
     width: 1280,
     height: 720,
     frame: false,
