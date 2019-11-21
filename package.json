@@ -1,5 +1,5 @@
 {
-  "name": "Tag",
+  "name": "TAG",
   "version": "1.0.0",
   "description": "A text annotation engine",
   "main": "main.js",
@@ -7,10 +7,13 @@
     "start": "electron ."
   },
   "build": {
+    "appId": "Tag",
     "win": {
       "target": [
         "nsis"
-      ]
+      ],
+      "icon": "./tag.ico",
+      "extraResources": "py"
     },
     "nsis": {
       "oneClick": false,
@@ -34,7 +37,9 @@
     "spectron": "^9.0.0"
   },
   "dependencies": {
+    "electron-packager": "^14.1.0",
     "jquery": "^3.4.1",
+    "path": "^0.12.7",
     "python-shell": "^1.0.8"
   }
 }

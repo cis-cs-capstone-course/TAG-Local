@@ -330,7 +330,7 @@ label_list.on('blur', '.label-name', function () {
   this.contentEditable = false;
 
   //fix whitespace and create new label name with no spaces (class names can't have spaces)
-  let newName = $(this).text().trim().replace(/\s+/g, "_").replace(/<|>/g, '');
+  let newName = $(this).text().trim().replace(/\s+/g, "_").replace(/<|>|&/g, '');
   $(this).text(newName);
   console.log("Attempting to change label name from " + tagModel.currentCategory + " to " + newName);
 

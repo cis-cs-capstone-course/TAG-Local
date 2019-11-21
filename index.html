@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 
@@ -11,7 +10,7 @@
     <div id="draggable"></div>
     <div id="leftContainer" class="container">
         <div id="logoContainer">
-            <img id="logo" src="images/Tag1.png" alt=""/>
+            <img id="logo" src="images/Tag1.png" alt="" />
         </div>
         <div id="searchContainer">
             <input id="searchEntry" type="search" placeholder="Search">
@@ -24,18 +23,22 @@
             <button id="searchToggle" class="searchButton">
                 <div>&gt;</div>
             </button>
-            <button id="regexFlags" class="searchButton"><img id="flagIcon"
-                    src="images/flagWhite.png"></button>
+            <button id="regexFlags" class="searchButton"><img id="flagIcon" src="images/flagWhite.png"></button>
             <form id="flags">
-                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="i"><span></span> &nbsp;(i)
+                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="i"><span></span>
+                    &nbsp;(i)
                     Case-insensitive </label>
-                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="m"><span></span> &nbsp;(m) Multiline
+                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="m"><span></span>
+                    &nbsp;(m) Multiline
                     mode</label>
-                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="s"><span></span> &nbsp;(s) Dotall
+                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="s"><span></span>
+                    &nbsp;(s) Dotall
                     Mode </label>
-                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="u"><span></span> &nbsp;(u) Unicode
+                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="u"><span></span>
+                    &nbsp;(u) Unicode
                     Support </label>
-                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="y"><span></span> &nbsp;(y) Sticky
+                <label class="flagOption hoverWhite"><input type="checkbox" name="flag" value="y"><span></span>
+                    &nbsp;(y) Sticky
                     Mode </label>
             </form>
         </div>
@@ -55,18 +58,19 @@
 
         </div>
         <div id="bButtonContainer">
-                <button id="downloadBtn" class="bButton">Download</button>
-                <button id="trainBtn" class="bButton">Train</button>
-                <button id="annotateBtn" class="bButton">Annotate</button>
-            </div>
-            <div id="dlContainer" class="btnGrpContainer">
-                <button id="dlZip" class="dlButton">Download Zip</button>
-                <button id="dlJson" class="dlButton">Download Json</button>
-            </div>
-            <div id="trainContainer" class="btnGrpContainer">
-                <button id="trainCurrent" class="dlButton">Train Current</button>
-                <button id="trainNew" class="dlButton">Load New</button>
-            </div>
+            <button id="downloadBtn" class="bButton">Download</button>
+            <button id="trainBtn" class="bButton">Train</button>
+            <button id="annotateBtn" class="bButton">Annotate</button>
+        </div>
+        <div id="dlContainer" class="btnGrpContainer">
+            <button id="dlZip" class="dlButton">Download Zip</button>
+            <button id="dlJson" class="dlButton">Download Json</button>
+        </div>
+        <div id="trainContainer" class="btnGrpContainer">
+            <button id="trainName" class="dlButton"></button>
+            <button id="trainCurrent" class="dlButton">Train Current</button>
+            <button id="trainNew" class="dlButton">Load New</button>
+        </div>
     </div>
     <div id="center" class="container"></div>
     <div id="centerContainer" class="container">
@@ -92,8 +96,8 @@
 
     <!-- No display -->
     <ul id="delete-menu"></ul>
-    <input id="colorChangePicker" class="noDisplay" type="color"/>
-    <input id="fileInputControl" class="noDisplay" type="file" accept="text/plain,.json, .zip" multiple/>
+    <input id="colorChangePicker" class="noDisplay" type="color" />
+    <input id="fileInputControl" class="noDisplay" type="file" accept="text/plain,.json, .zip" multiple />
     <a id="download_link" class="noDisplay" download="annotations.json" href=””></a>
 
     <!-- Scripts -->
@@ -109,7 +113,7 @@
     <script src="js/rightPanel.js"></script>
     <script src="js/search.js"></script>
     <script src="js/menu.js"></script>
-    <script src="js/file.js"></script>
+    <script src="js/backend.js"></script>
     <script src="./renderer.js"></script>
 </body>
 

@@ -25,6 +25,10 @@ delete_menu.on('click', 'li', function () {
     } else if ($(this).hasClass('minimize')) {
         win.minimize();
     } else if ($(this).hasClass('exit')) {
-        win.close();
+        dialog.showMessageBox({buttons: ["Yes","No","Cancel"],
+        message: "Do you really want to quit?"}).then((data) => {
+            if (data.response == 0)
+                win.close();
+        });
     }
 });

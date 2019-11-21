@@ -192,6 +192,9 @@ img, #logoContainer {
 .bButton:hover {
   background-color: white !important;
   color: black !important;
+}
+
+#annotateBtn {
   cursor: pointer;
 }
 
@@ -222,10 +225,15 @@ img, #logoContainer {
   transition: background-color 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease;
 }
 
-.dlButton:hover {
+.dlButton:not(#trainName):hover {
   background-color: white !important;
   color: black !important;
   cursor: pointer;
+}
+
+#trainName {
+  background-color: #5E42A6;
+  color: white;
 }
 
 #centerContainer {
