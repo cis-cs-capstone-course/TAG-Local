@@ -19,12 +19,12 @@ $('#trainNew').on('click', function () {
         dialog.showOpenDialog({
             title: "Select a folder",
             properties: ["openDirectory"]
-        }).then((data) => {
+        }).then(function (data) {
             if (data.filePaths[0]) {
                 console.log("Changing paths to: '" + data.filePaths[0] + "'")
-                modelPath = data.filePaths[0];
+                modelPath = data.filePaths[0].goodPath();
                 $('#trainCurrent').show();
-                $('#trainName').text(modelPath.truncStart(20, true)).show();
+                $('#trainName').text(modelPath.truncStart(30, true)).show();
             }
             dialogOpen = false;
         });
@@ -140,9 +140,13 @@ pushToConsole = function (string, limit = 0) {
     }
 }
 
+String.prototype.goodPath = function () {
+    return this.replace(/\\/g, "/");
+}
+
 String.prototype.truncStart = function (n, truncAfterWord = false) {
     if (this.length <= n) { return this; }
     let subString = this.substr(this.length - n, this.length);
-    let truncString = "…" + (truncAfterWord ? subString.substr(0, subString.indexOf('/')) : subString);
+    let truncString = "…" + (truncAfterWord ? subString.substr(subString.indexOf('/'), subString.length) : subString);
     return (truncString.length === 1 ? "…" + subString.substring(0, subString.length) : truncString);
 };
