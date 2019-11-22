@@ -72,9 +72,9 @@ class Doc {
       }
       // try each annotation
       var catAnno = [];
-      for (let anno of this.annotations) {
-        if (anno.label === category.name) {
-          catAnno.push(anno);
+      for (let i in this.annotations) {
+        if (this.annotations[i].label === category.name) {
+          catAnno.push([this.annotations[i], i]);
         }
       }
       annotations.push(catAnno);

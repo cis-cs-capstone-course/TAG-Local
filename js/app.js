@@ -684,23 +684,22 @@ function renderHighlights() {
   }
   // inital padding height
   let padding = 0;
-  // set annotation number
-  let annoNum = 0;
   // do each category
   for (let category of labelSortedAnnos) {
     // annotations list
     if (category.length === 0) {
       continue;
     }
+    
     var annoHeader = $('<h2/>', {
-      html: category[0].label + '<img class="dropArrow upsideDown" src="images/arrowDownWhite.png">',
+      html: category[0][0].label + '<img class="dropArrow upsideDown" src="images/arrowDownWhite.png">',
       class: 'annoHeader hoverWhite',
-      value: tagModel.getColor(category[0].label)
+      value: tagModel.getColor(category[0][0].label)
     });
     $('#anno-list').append(annoHeader).append(
       $('<ul/>', {
         class: 'anno-group',
-        value: category[0].label
+        value: category[0][0].label
       })
     );
     annoHeader.click();
@@ -714,19 +713,18 @@ function renderHighlights() {
     // do each annotation for current category
     for (let anno of category) {
       // add annotation to label
-      $('.anno-group[value="' + anno.label + '"]').append(
+      $('.anno-group[value="' + anno[0].label + '"]').append(
         $('<li/>', {
           class: 'annotation hoverWhite',
-          style: 'background-color: ' + tagModel.getColor(anno.label),
-          value: annoNum
-        }).text(anno.content.trunc(20, true).escapeHtml())
+          style: 'background-color: ' + tagModel.getColor(anno[0].label),
+          value: anno[1]
+        }).text(anno[0].content.trunc(20, true).escapeHtml())
       );
 
       // Add text before highlight then the highlight itself
-      newText += text.substring(lastIndex, anno.range.startPosition);
-      newText += '<mark class="highlight label_' + anno.label + '" value="' + annoNum + '" style="padding: ' + padding + 'px 0;">' + text.substring(anno.range.startPosition, anno.range.endPosition) + '</mark>';
-      lastIndex = anno.range.endPosition;;
-      annoNum += 1;
+      newText += text.substring(lastIndex, anno[0].range.startPosition);
+      newText += '<mark class="highlight label_' + anno[0].label + '" value="' + anno[1] + '" style="padding: ' + padding + 'px 0;">' + text.substring(anno[0].range.startPosition, anno[0].range.endPosition) + '</mark>';
+      lastIndex = anno[0].range.endPosition;
     }
     //update padding size
     padding += offset;
