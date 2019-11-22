@@ -4,16 +4,26 @@
   "description": "A text annotation engine",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "package": "electron-packager . --icon=./assets/tag.ico --overwrite",
+    "build": "electron-builder ."
   },
   "build": {
-    "appId": "Tag",
+    "appId": "TAG",
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "./tag.ico",
-      "extraResources": "py"
+      "icon": "assets/tag.ico",
+      "extraResources": [
+        {
+          "from": "py",
+          "to": "py",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,

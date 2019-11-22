@@ -2,6 +2,7 @@ const { remote } = require('electron');
 
 var win = remote.getCurrentWindow();
 
+// clicked logo // open menu
 $('#logo').on('click', function (e) {
     delete_menu.css({
         top: ($(this).position().top + $(this).height() + 1),
@@ -16,6 +17,7 @@ $('#logo').on('click', function (e) {
         .toggle(100);
 });
 
+// clicked an item in list // do according to which was clicked
 delete_menu.on('click', 'li', function () {
     if ($(this).hasClass('fullscreenToggle')) {
         if (win.isFullScreen()) {

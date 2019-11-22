@@ -1,6 +1,7 @@
 $('#consoleArrow').hide();
 $('#rightArrow').hide();
 var timer;
+
 // mouse is hovered over right area
 $('#rightContainer').on('mouseenter', function () {
     $('#rightArrow').fadeIn(100);
@@ -25,6 +26,10 @@ $(document).on('click', function (e) {
         // hide
         $('#rightContainer').css('right', '-28%');
         $('#rightArrow').removeClass('noDisplay');
+        //hide console
+        $('#consoleContainer').css('height', ' 1vh');
+        consoleShown = false;
+        $('#consoleArrow').addClass('upsideDown');
     }
 });
 
@@ -32,15 +37,15 @@ $(document).on('click', function (e) {
 $('#anno-list').on('click', '.annoHeader', function () {
     $(this).next('ul').slideToggle(200);
     $(this).children('.dropArrow').toggleClass('upsideDown');
-    
+
     // aesthetics 
     // is closed // open
     if ($(this).attr('value').charAt(0) === '-') {
-        $(this).attr('value', $(this).attr('value', ).slice(1));
+        $(this).attr('value', $(this).attr('value').slice(1));
         $(this).css('background-color', '');
         $(this).css('color', 'white');
         $(this).children('.dropArrow').css('content', 'url("images/arrowDownWhite.png")');
-    } 
+    }
     // is opened // close
     else {
         $(this).css('background-color', $(this).attr('value'));
@@ -67,7 +72,7 @@ $('#anno-list').on('contextmenu', '.annotation', function (e) {
 })
 
 // right clicked most recent annotation // bring up delete prompt
-$('#recent').on('contextmenu', function(e) {
+$('#recent').on('contextmenu', function (e) {
     event.preventDefault();
     delete_menu.append(
         $('<li/>', {
@@ -82,25 +87,20 @@ $('#recent').on('contextmenu', function(e) {
         });
 });
 
+// toggle console shown
 var consoleShown = false;
-$('#consoleContainer').on('click', function() {
+$('#consoleContainer').on('click', function () {
     if (consoleShown) {
         $(this).css('height', ' 1vh');
-        consoleShown = false; 
-        $('#consoleArrow').toggleClass('upsideDown');
+        consoleShown = false;
+        $('#consoleArrow').addClass('upsideDown');
     } else {
-        $(this).css('height', ' 10vh');
-        consoleShown = true; 
-        $('#consoleArrow').toggleClass('upsideDown');
+        $(this).css('height', ' 80vh');
+        consoleShown = true;
+        $('#consoleArrow').removeClass('upsideDown');
     }
 }).on('mouseenter', function () {
     $('#consoleArrow').fadeIn(100);
 }).on('mouseleave', function () {
     $('#consoleArrow').fadeOut(100);
-});
-
-$('#console').on('update', function() {
-    while ($(this).children().length > 100) {
-        $(this).find('li:first').remove();
-    }
 });
