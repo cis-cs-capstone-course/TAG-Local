@@ -1,11 +1,18 @@
+//jshint esversion: 6
+
 const { dialog } = require('electron').remote;
 var path = require('path');
 var PythonShell = require('python-shell');
 // paths to apps // please add new scripts, thx
-var pyScript = path.join(__dirname, '/../py/hello.py');
-var pyScriptLocal = path.join(__dirname, '/py/hello.py');
+// var pyScript = path.join(__dirname, '/../py/hello.py');
+// var pyScriptLocal = path.join(__dirname, '/py/hello.py');
+let trainScript = path.join(__dirname, '..', 'py', 'train.py');
+let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
+let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
+let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 
 // modePath
+var modelName = 'untitledModel';
 var modelPath = null;
 // file path picker is open
 var dialogOpen = false;
@@ -27,8 +34,8 @@ $('#trainNew').on('click', function () {
         }).then(function (data) {
             // on close get file path
             if (data.filePaths[0]) {
-                console.log("Changing paths to: '" + data.filePaths[0] + "'")
-                modelPath = data.filePaths[0].goodPath();
+                console.log("Changing paths to: '" + data.filePaths[0] + "'");
+                modelPath = path.join(data.filePaths[0].goodPath(), modelName);
                 $('#trainCurrent').show();
                 $('#trainName').text(modelPath.truncStart(30, true)).show();
             }
@@ -44,25 +51,25 @@ $('#trainCurrent').on('click', function () {
     // no path
     if (!modelPath) {
         alert("Please add a model path");
-        return
+        return;
     }
     // TODO: replace options
     var options = {
-        args: ['my First Argument', 'My Second Argument', '--option=123']
+        args: ['--model_output_dir', modelPath, '--data_path', tagModel.exportAsString(), '--iterations', 30]
     };
     // try app
     // TODO: replace with annotate all
-    let pyReturn
+    let pyReturn;
     // try installer path
-    launchPy(pyScript, options).then(function (data) {
+    launchPy(trainScript, options).then(function (data) {
         pyReturn = data;
-        alert('!')
-        next()
+        alert('!');
+        next();
     }).catch(function () {
         //try compiled path
-        launchPy(pyScriptLocal, options).then(function (data) {
+        launchPy(trainScriptLocal, options).then(function (data) {
             pyReturn = data;
-            alert('!!!')
+            alert('!!!');
             next();
         }).catch(function () {
             // still didn't work
@@ -77,24 +84,24 @@ $('#trainCurrent').on('click', function () {
 $('#annotateBtn').on('click', function () {
     if (!modelPath) {
         alert("Please add a model path");
-        return
+        return;
     }
     // replace options
     var options = {
-        args: ['my First Argument', 'My Second Argument', '--option=123']
+        args: ['--model_path', modelPath, '--data_path', tagModel.exportAsString()]
     };
     // try app
     // TODO: replace with annotate all
-    let pyReturn
-    launchPy(pyScript, options).then(function (data) {
+    let pyReturn;
+    launchPy(annotateScript, options).then(function (data) {
         pyReturn = data;
-        alert('!')
-        next()
+        alert('!');
+        next();
     }).catch(function () {
         //try compiled path
-        launchPy(pyScriptLocal, options).then(function (data) {
+        launchPy(annotateScriptLocal, options).then(function (data) {
             pyReturn = data;
-            alert('!!!')
+            alert('!!!');
             next();
         }).catch(function () {
             // still didn't work
@@ -107,7 +114,7 @@ $('#annotateBtn').on('click', function () {
 
     next = function () {
         console.log(pyReturn);
-    }
+    };
 });
 
 // launches script // get messages and add to console // return on end
@@ -153,11 +160,11 @@ launchPy = function (file, options = null) {
             }
         });
     });
-}
+};
 
 // push to console // limit is number of lines to keep in console // 0 = unlimited
 pushToConsole = function (string, limit = 0) {
-    $('#console').append($('<li>').text(string))
+    $('#console').append($('<li>').text(string));
     $('#console').scrollTop($('#console').prop('scrollHeight'));
 
     // over limit, remove excess lines
@@ -166,12 +173,12 @@ pushToConsole = function (string, limit = 0) {
             $('#console').find(':first-child').remove();
         }
     }
-}
+};
 
 // standard path (forward slashes instead of backslashes)
 String.prototype.goodPath = function () {
     return this.replace(/\\/g, "/");
-}
+};
 
 // truncate from front of string // truncate before word (searches for forward slash)
 String.prototype.truncStart = function (n, truncBeforeWord = false) {
