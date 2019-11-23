@@ -37,7 +37,8 @@ def main(model, raw_data):
             returnData.append(annotation.__dict__)
         docs.append(documentClass(d['title'], d['text'], returnData).__dict__)
         # print("Found %d entities", doc.ents.count)
-    return json.dumps(docs)
+    with open('data.json', 'w') as outfile:
+        json.dump(docs, outfile)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
