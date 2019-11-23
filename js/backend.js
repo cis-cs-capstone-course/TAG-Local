@@ -12,7 +12,7 @@ let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 
 // modePath
-var modelName = 'untitledModel';
+var modelName = tagModel.currentModel;
 var modelPath = null;
 // file path picker is open
 var dialogOpen = false;
@@ -36,8 +36,9 @@ $('#trainNew').on('click', function () {
             if (data.filePaths[0]) {
                 console.log("Changing paths to: '" + data.filePaths[0] + "'");
                 modelPath = path.join(data.filePaths[0].goodPath(), modelName);
+                tagModel.currentModel = modelPath;
                 $('#trainCurrent').show();
-                $('#trainName').text(modelPath.truncStart(30, true)).show();
+                $('#trainName').text(modelPath.truncStart(30, true));
             }
             dialogOpen = false;
         });
@@ -117,7 +118,9 @@ $('#annotateBtn').on('click', function () {
     };
 });
 
-// launches script // get messages and add to console // return on end
+// launches script
+// get messages and add to console
+// return on end
 launchPy = function (file, options = null) {
     return new Promise(function (resolve, reject) {
         $(document.body).css('cursor', 'wait');
@@ -134,7 +137,7 @@ launchPy = function (file, options = null) {
             toLog.push(message);
             returned.push(message);
 
-            // check for elasped time, then update console
+            // check for elapsed time, then update console
             if (Date.now() - timer > waitTime) {
                 do {
                     pushToConsole(toLog.shift(), 100);
@@ -162,15 +165,19 @@ launchPy = function (file, options = null) {
     });
 };
 
-// push to console // limit is number of lines to keep in console // 0 = unlimited
+// push to console
+// limit is number of lines to keep in console
+// 0 = unlimited
 pushToConsole = function (string, limit = 0) {
-    $('#console').append($('<li>').text(string));
-    $('#console').scrollTop($('#console').prop('scrollHeight'));
+    var console = $('#console');
+
+    console.append($('<li>').text(string));
+    console.scrollTop(console.prop('scrollHeight'));
 
     // over limit, remove excess lines
     if (limit > 0) {
-        while ($('#console').children().length - limit > 0) {
-            $('#console').find(':first-child').remove();
+        while (console.children().length - limit > 0) {
+            console.find(':first-child').remove();
         }
     }
 };
@@ -180,7 +187,8 @@ String.prototype.goodPath = function () {
     return this.replace(/\\/g, "/");
 };
 
-// truncate from front of string // truncate before word (searches for forward slash)
+// truncate from front of string
+// truncate before word (searches for forward slash)
 String.prototype.truncStart = function (n, truncBeforeWord = false) {
     if (this.length <= n) { return this; }
     let subString = this.substr(this.length - n, this.length);

@@ -6,10 +6,10 @@ class TagModel {
     this.openDocs = [];
     this.currentCategory = null;
     this.categories = [];
+    this.currentModel = null;
   }
 
   // ----- documents ----- //
-
   addDoc(doc) {
     console.log("Adding document: '" + doc.title + "'");
     this.openDocs.push(doc);
@@ -32,13 +32,15 @@ class TagModel {
   deleteDoc() {
     let docToDelete = this.currentDoc;
     this.openDocs = this.openDocs.filter(function (doc) {
-      return doc != docToDelete;
+      return doc !== docToDelete;
     });
     this.currentDoc = this.openDocs[0];
   }
 
-  // ----- annotations ----- //
 
+
+
+  // ----- annotations ----- //
   addAnnotation(range, category) {
     //validate annotation first, throw error if dumbo
     let content = this.currentDoc.text.substring(range.startPosition, range.endPosition);
@@ -65,8 +67,10 @@ class TagModel {
     this.currentDoc.deleteAnnotationByIndex(index);
   }
 
-  // ----- Categories ----- //
 
+
+
+  // ----- Categories ----- //
   addCategory(name, color) {
     let newCategory = new Category(name, color);
     console.log("Adding category: [" + newCategory.name + "]");
@@ -103,7 +107,7 @@ class TagModel {
     let categoryToDelete = this.currentCategory;
     this.openDocs.forEach(function (doc) {
       doc.annotations = doc.annotations.filter(function (annotation) {
-        return annotation.label != categoryToDelete;
+        return annotation.label !== categoryToDelete;
       });
     });
     this.categories.splice(this.categories.indexOf(this.categories.find(category => category.name === this.currentCategory)), 1);
@@ -114,19 +118,23 @@ class TagModel {
     }
   }
 
-  // ----- color ----- //
 
+
+
+  // ----- color ----- //
   changeColor(color) {
     // update color in category list
     this.categories.find(category => category.name === this.currentCategory).color = color;
   }
 
-  getColor(labelname) {
-    return this.categories.find(category => category.name === labelname).color;
+  getColor(labelName) {
+    return this.categories.find(category => category.name === labelName).color;
   }
 
-  // ----- export ----- //
 
+
+
+  // ----- export ----- //
   exportAsString() {
     return JSON.stringify(this.openDocs);
   }
