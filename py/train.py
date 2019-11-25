@@ -80,8 +80,6 @@ def main(raw_data, n_iter, model):
 
     # Update model
     output_dir = Path(model)
-    if not output_dir.exists():
-        output_dir.mkdir()
     nlp.to_disk(output_dir)
     print("Saved model to: ", output_dir)
     sys.stdout.flush()
@@ -89,25 +87,20 @@ def main(raw_data, n_iter, model):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--model_output_dir',
-        help="Path to the directory to output the trained models to"
-    )
 
     parser.add_argument(
-        '--data_path',
+        '--raw_data',
         help="Path to the data directory."
     )
 
     parser.add_argument(
-        '--iterations',
+        '--n_iter',
         type=int,
         help="Number of iterations to run."
     )
     parser.add_argument(
-        '--Model',
-        default=None,
-        help="Number of iterations to run."
+        '--model',
+        help="Path to current model."
     )
 
     args = parser.parse_args()
@@ -115,7 +108,4 @@ if __name__ == '__main__':
     print(args)
     sys.stdout.flush()
 
-    main(args.model_output_dir,
-              args.data_path,
-              args.iterations,
-              args.Model)
+    main(args.raw_data, args.n_iter, args.model)

@@ -1,7 +1,6 @@
 import json
 import argparse
 import sys
-
 import spacy
 
 
@@ -41,11 +40,11 @@ def main(model, raw_data):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model_path',
+        '--model',
         help="path to ML model"
     )
     parser.add_argument(
-        '--data_path',
+        '--raw_data',
         help="Path to the data directory."
     )
 
@@ -54,4 +53,4 @@ args = parser.parse_args()
 print("args parsed")
 print(args)
 sys.stdout.flush()
-main(args.model_path, args.data_path)
+main(args.model, args.raw_data)
