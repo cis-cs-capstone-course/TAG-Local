@@ -2,14 +2,14 @@
 
 //jshint esversion:6
 // const { remote } = require('electron');
-const { app, Menu, MenuItem } = remote;
-const isMac = process.platform === 'darwin';
+var fs = require('fs');
+const { dialog, app, Menu, MenuItem } = remote;
 
+const isMac = process.platform === 'darwin';
+var dialogOpen = false;
 // const menu = new Menu();
-console.log("made menu");
-// menu.append(new MenuItem({ label: 'MenuItem1', click() { console.log('item 1 clicked'); } }));
-// menu.append(new MenuItem({ type: 'separator' }));
-// menu.append(new MenuItem({ label: 'MenuItem2', type: 'checkbox', checked: true }));
+// console.log("made menu");
+
 const template = [
   // { role: 'appMenu' }
   ...(isMac ? [{
@@ -33,7 +33,9 @@ const template = [
       {label: 'New Project'},
       {label: 'Open Project'},
       {type: 'separator'},
-      {label: 'Save Project'},
+      {label: 'Save Project',
+      click: showSaveDialog
+      },
       {label: 'Save Project As'},
     ]
   },
@@ -111,3 +113,29 @@ const template = [
 
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
+
+function showSaveDialog(){
+  console.log("Showing save dialog");
+  dialog.showSaveDialog().then(result => {
+      if (result.filePath === undefined){
+          console.log("You didn't save the file");
+          return;
+      }
+      if (result.canceled == true) {
+        console.log("You canceled the save");
+        return;
+      }
+
+      filePath = result.filePath  + '.tagProj';
+      console.log("saving file @ ", filePath);
+    // fileName is a string that contains the path and filename created in the save file dialog.
+    //TODO: validate filePath has tagProj extension, if not, add.
+      fs.writeFile(filePath, JSON.stringify(tagModel), (err) => {
+          if(err){
+              alert("An error ocurred creating the file "+ err.message)
+            }
+
+          alert("The file has been succesfully saved");
+      });
+  });
+}
