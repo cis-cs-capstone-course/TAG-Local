@@ -15,11 +15,12 @@ let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 var dialogOpen = false;
 
 // hide things supposed to be hidden
-$('#trainCurrent').hide();
-$('#trainName').hide();
+$('#trainAll').hide();
+$('#trainThis').hide();
+$('#modelPath').hide();
 
 // add new model path
-$('#trainNew').on('click', function () {
+$('#loadNew').on('click', function () {
     // check file path is open
     if (!dialogOpen) {
         // is not open // open
@@ -33,8 +34,9 @@ $('#trainNew').on('click', function () {
             if (data.filePaths[0]) {
                 console.log("Changing paths to: '" + data.filePaths[0] + "'");
                 tagModel.currentModel = data.filePaths[0].goodPath();
-                $('#trainCurrent').show();
-                $('#trainName').text(tagModel.currentModel.truncStart(30, true)).show();
+                $('#trainAll').show();
+                $('#trainThis').show();
+                $('#modelPath').text(tagModel.currentModel.truncStart(30, true)).show();
             }
             dialogOpen = false;
         });
@@ -44,74 +46,107 @@ $('#trainNew').on('click', function () {
 });
 
 // try training
-$('#trainCurrent').on('click', function () {
-    // no path
-    if (!tagModel.currentModel) {
-        alert("Please add a model path");
-        return;
-    }
-    // TODO: replace options
-    var options = {
-        args: ['--raw_data', tagModel.exportAsString(), '--n_iter', 30, '--model', tagModel.currentModel]
-    };
-    // try app
-    // TODO: replace with annotate all
-    let pyReturn;
-    // try installer path
-    launchPy(trainScript, options).then(function (data) {
-        pyReturn = data;
-        alert('!');
-        next();
-    }).catch(function () {
-        //try compiled path
-        launchPy(trainScriptLocal, options).then(function (data) {
-            pyReturn = data;
-            alert('!!!');
-            next();
-        }).catch(function () {
-            // still didn't work
-            if (!pyReturn) {
-                alert('Something went wrong');
-                return -1;
-            }
-        });
-    });
+$('.trainButton').on('click', function () {
+  // no path
+  if (!tagModel.currentModel) {
+      alert("Please add a model path");
+      return;
+  }
+
+  if (tagModel.currentDoc == null) {
+  alert("Please upload a document first!");
+  return
+  }
+
+  var isAllDocuments;
+
+  if (this.id === "trainAll") {
+    console.log("Annotating all documents...");
+    isAllDocuments = true;
+  }
+  else {
+    console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
+    isAllDocuments = false;
+  }
+
+  // TODO: replace options
+  var options = {
+      args: ['--raw_data', tagModel.jsonifyData(isAllDocuments), '--n_iter', 30, '--model', tagModel.currentModel]
+  };
+  // try app
+  // TODO: replace with annotate all
+  let pyReturn;
+  // try installer path
+  launchPy(trainScript, options).then(function (data) {
+      pyReturn = data;
+      alert('!');
+      next();
+  }).catch(function () {
+      //try compiled path
+      launchPy(trainScriptLocal, options).then(function (data) {
+          pyReturn = data;
+          alert('!!!');
+          next();
+      }).catch(function () {
+          // still didn't work
+          if (!pyReturn) {
+              alert('Something went wrong');
+              return -1;
+          }
+      });
+  });
 });
 
-$('#annotateBtn').on('click', function () {
-    if (!tagModel.currentModel) {
-        alert("Please add a model path");
-        return;
-    }
-    // replace options
-    var options = {
-        args: ['--model', tagModel.currentModel, '--raw_data', tagModel.exportAsString()]
-    };
-    // try app
-    // TODO: replace with annotate all
-    let pyReturn;
-    launchPy(annotateScript, options).then(function (data) {
-        pyReturn = data;
-        alert('!');
-        next();
-    }).catch(function () {
-        //try compiled path
-        launchPy(annotateScriptLocal, options).then(function (data) {
-            pyReturn = data;
-            alert('!!!');
-            next();
-        }).catch(function () {
-            // still didn't work
-            if (!pyReturn) {
-                alert('Something went wrong');
-                return -1;
-            }
-        });
-    });
+$('.annButton').on('click', function () {
+  if (!tagModel.currentModel) {
+      alert("Please add a model first");
+      return;
+  }
 
-    next = function () {
-        console.log(pyReturn);
-    };
+  if (tagModel.currentDoc == null) {
+    alert("Please upload a document first!");
+    return
+  }
+  var isAllDocuments;
+
+  if (this.id === "annAll") {
+    console.log("Annotating all documents...");
+    isAllDocuments = true;
+  }
+  else {
+    console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
+    isAllDocuments = false;
+  }
+
+  // replace options
+  var options = {
+      args: ['--model', tagModel.currentModel, '--raw_data', tagModel.jsonifyData(isAllDocuments)]
+  };
+  // try app
+  // TODO: replace with annotate all
+  let pyReturn;
+  launchPy(annotateScript, options).then(function (data) {
+      pyReturn = data;
+      alert('!');
+      next();
+  }).catch(function () {
+      //try compiled path
+      launchPy(annotateScriptLocal, options).then(function (data) {
+          pyReturn = data;
+          alert('!!!');
+          next();
+      }).catch(function () {
+          // still didn't work
+          if (!pyReturn) {
+              alert('Something went wrong');
+              return -1;
+          }
+      });
+  });
+
+  next = function () {
+      console.log(pyReturn);
+  };
 });
 
 // launches script
