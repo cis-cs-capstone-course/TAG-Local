@@ -11,9 +11,6 @@ let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
 let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 
-// modePath
-var modelName = tagModel.currentModel;
-var modelPath = null;
 // file path picker is open
 var dialogOpen = false;
 
@@ -35,10 +32,9 @@ $('#trainNew').on('click', function () {
             // on close get file path
             if (data.filePaths[0]) {
                 console.log("Changing paths to: '" + data.filePaths[0] + "'");
-                modelPath = path.join(data.filePaths[0].goodPath(), modelName);
-                tagModel.currentModel = modelPath;
+                tagModel.currentModel = data.filePaths[0];
                 $('#trainCurrent').show();
-                $('#trainName').text(modelPath.truncStart(30, true));
+                $('#trainName').text(tagModel.currentModel.truncStart(30, true)).show();
             }
             dialogOpen = false;
         });
@@ -50,13 +46,13 @@ $('#trainNew').on('click', function () {
 // try training
 $('#trainCurrent').on('click', function () {
     // no path
-    if (!modelPath) {
+    if (!tagModel.currentModel) {
         alert("Please add a model path");
         return;
     }
     // TODO: replace options
     var options = {
-        args: ['--model_output_dir', modelPath, '--data_path', tagModel.exportAsString(), '--iterations', 30]
+        args: ['--model_output_dir', tagModel.currentModel, '--data_path', tagModel.exportAsString(), '--iterations', 30]
     };
     // try app
     // TODO: replace with annotate all
@@ -83,13 +79,13 @@ $('#trainCurrent').on('click', function () {
 });
 
 $('#annotateBtn').on('click', function () {
-    if (!modelPath) {
+    if (!tagModel.currentModel) {
         alert("Please add a model path");
         return;
     }
     // replace options
     var options = {
-        args: ['--model_path', modelPath, '--data_path', tagModel.exportAsString()]
+        args: ['--model_path', tagModel.currentModel, '--data_path', tagModel.exportAsString()]
     };
     // try app
     // TODO: replace with annotate all

@@ -6,7 +6,7 @@ class TagModel {
     this.openDocs = [];
     this.currentCategory = null;
     this.categories = [];
-    this.currentModel = null;
+    this.currentModel = "";
   }
 
   // ----- documents ----- //
