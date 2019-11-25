@@ -45,7 +45,7 @@ $('#dlJson').on('click', function () {
     alert('Error: No data to download!');
     return;
   }
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
+  var blob = new Blob([tagModel.jsonifyData()], { type: 'application/JSON' });
   saveAs(blob, "annotations.json");
 });
 
@@ -58,7 +58,7 @@ $('#sendML').on('click', function () {
   }
   // prepare data
 
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
+  var blob = new Blob([tagModel.jsonifyData()], { type: 'application/JSON' });
   var formData = new FormData();
   console.log("Sending data to ML");
 

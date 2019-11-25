@@ -55,7 +55,7 @@ $('#trainCurrent').on('click', function () {
     }
     // TODO: replace options
     var options = {
-        args: ['--model_output_dir', modelPath, '--data_path', tagModel.exportAsString(), '--iterations', 30]
+        args: ['--model_output_dir', modelPath, '--data_path', tagModel.jsonifyData(), '--iterations', 30]
     };
     // try app
     // TODO: replace with annotate all
@@ -88,7 +88,7 @@ $('#annotateBtn').on('click', function () {
     }
     // replace options
     var options = {
-        args: ['--model_path', modelPath, '--data_path', tagModel.exportAsString()]
+        args: ['--model_path', modelPath, '--data_path', tagModel.jsonifyData()]
     };
     // try app
     // TODO: replace with annotate all
