@@ -32,7 +32,7 @@ $('#trainNew').on('click', function () {
             // on close get file path
             if (data.filePaths[0]) {
                 console.log("Changing paths to: '" + data.filePaths[0] + "'");
-                tagModel.currentModel = data.filePaths[0];
+                tagModel.currentModel = data.filePaths[0].goodPath();
                 $('#trainCurrent').show();
                 $('#trainName').text(tagModel.currentModel.truncStart(30, true)).show();
             }
