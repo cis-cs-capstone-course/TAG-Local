@@ -1,21 +1,18 @@
 import json
-import os
 import argparse
 import sys
-import random
-from pathlib import Path
-import spacy
-import re
-import string
-from spacy.util import minibatch, compounding
 
-class documentClass:
+import spacy
+
+
+class DocumentClass:
     def __init__(self, title, text, annotations):
         self.title = title
         self.text = text
         self.annotations = annotations
 
-class annotationClass:
+
+class AnnotationClass:
     def __init__(self, label, start, end, content):
         self.range = {'startPosition': start, 'endPosition': end}
         self.content = content
@@ -25,20 +22,21 @@ class annotationClass:
 def main(model, raw_data):
     data = json.loads(raw_data)
     nlp = spacy.load(model)
-    print("Loaded model '%s'" % model)
+    print("Loaded model from: '%s'" % model)
     docs = []
     for d in data:
         doc = nlp(d['text'])
-        returnData = []
+        return_data = []
         for ent in doc.ents:
-            annotation = annotationClass(ent.label_, ent.start_char, ent.end_char, ent.text)
+            annotation = AnnotationClass(ent.label_, ent.start_char, ent.end_char, ent.text)
             print("Found entity: %s in %s" % (ent.text, d['title']))
             sys.stdout.flush()
-            returnData.append(annotation.__dict__)
-        docs.append(documentClass(d['title'], d['text'], returnData).__dict__)
+            return_data.append(annotation.__dict__)
+        docs.append(DocumentClass(d['title'], d['text'], return_data).__dict__)
         # print("Found %d entities", doc.ents.count)
     with open('data.json', 'w') as outfile:
         json.dump(docs, outfile)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

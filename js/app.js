@@ -6,7 +6,8 @@
 var tagModel = new TagModel();
 var textArea = $('#doc-view');
 var highlightArea = $('#highlightArea');
-var label_list = $("#label-list");
+var label_list = $('#label-list');
+var label_selected = $('#label-selected');
 var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
@@ -63,8 +64,7 @@ $('#sendML').on('click', function () {
   console.log("Sending data to ML");
 
   formData.append("jsonUpload", blob)
-    .append("save-model", $("#save-model").is(':checked'))
-    .append("load-model", $("#load-model").is(':checked'));
+          .append("model", tagModel.currentModel);
   $.ajax({
     type: "POST",
     url: "mldata",
@@ -357,7 +357,7 @@ label_list.on('blur', '.label-name', function () {
   );
 
   // update category name in list
-  $('#label-selected').attr('value', newName);
+  label_selected.attr('value', newName);
 
   tagModel.renameCategory(newName);
   renderHighlights();
@@ -374,7 +374,7 @@ $('#colorChangePicker').on('change', function () {
   console.log('colorPicked: ' + this.value);
 
   //update colors on page
-  $('#label-selected').css('background-color', this.value);
+  label_selected.css('background-color', this.value);
   $('#' + tagModel.currentCategory + '-style').html(
     '.hwt-content .label_' + tagModel.currentCategory + ' {background-color: ' + this.value + ';}'
   );
@@ -464,7 +464,7 @@ delete_menu.on('click', 'li', function () {
     tagModel.deleteCategory();
     console.log('Category Deleted');
     resize();
-    $('#label-selected').remove();
+    label_selected.remove();
     if (tagModel.currentDoc != null) {
       $('.label[value="' + tagModel.currentCategory + '"]').attr('id', 'label-selected');
     }
@@ -520,7 +520,7 @@ function addDoc(doc) {
   mostRecentIndex = -1;
   renderHighlights();
   doc_list.scrollTop(doc_list.prop('scrollHeight'));
-};
+}
 
 //add new label
 function addLabel(name, color = null) {
@@ -541,7 +541,7 @@ function addLabel(name, color = null) {
 
     // select new category
     tagModel.currentCategory = name;
-    $('#label-selected').attr('id', '');
+    label_selected.attr('id', '');
 
     // add category to page
     var newLabel = $('<div/>', {
@@ -560,10 +560,10 @@ function addLabel(name, color = null) {
       }).text(name)
     );
 
-    $('#label-list').append(newLabel);
+    label_list.append(newLabel);
 
     // go to new label's postion
-    $('#label-list').scrollTop($('#label-list').prop('scrollHeight'));
+    label_list.scrollTop(label_list.prop('scrollHeight'));
 
     // first color => make current category the color
     tagModel.currentCategory = name;
@@ -743,7 +743,7 @@ function renderHighlights() {
     );
   }
   // update most recent
-  if (mostRecentIndex != -1) {
+  if (mostRecentIndex !== -1) {
     $('#recent').text(tagModel.currentDoc.annotations[mostRecentIndex].content.trunc(20, true).escapeHtml()).css('background-color', tagModel.getColor(tagModel.currentDoc.annotations[mostRecentIndex].label)).attr('value', mostRecentIndex);
     $('#recentArea').css('display', 'block');
   }
@@ -765,7 +765,7 @@ function jumpToAnno(num) {
 // pass as safe text
 String.prototype.escapeHtml = function () {
   return this.replace(/<|>/g, "_");
-}
+};
 
 // truncate string and add ellipsis // truncAfterWord will only truncate on spaces // returns entire word if string contains no spaces
 String.prototype.trunc = function (n, truncAfterWord = false) {

@@ -1,25 +1,25 @@
 import json
-import os
 import argparse
 import sys
 import random
 from pathlib import Path
 import spacy
-import re
-import string
 from spacy.util import minibatch, compounding
 
-class documentClass:
+
+class DocumentClass:
     def __init__(self, title, text, annotations):
         self.title = title
         self.text = text
         self.annotations = annotations
 
-class annotationClass:
+
+class AnnotationClass:
     def __init__(self, label, start, end, content):
         self.range = {'startPosition': start, 'endPosition': end}
         self.content = content
         self.label = label
+
 
 def data_converting(raw_data):
     data = json.loads(raw_data)
@@ -33,10 +33,11 @@ def data_converting(raw_data):
             final_data.append((d['text'],temp))
     return final_data, label_set
 
-def main(output_dir, data_path, n_iter, model=None):
+
+def main(raw_data, n_iter, model):
     # """Set up the pipeline and entity recognizer, and train the new entity."""
     random.seed(0)
-    train_data, labelset = data_converting(data_path)
+    train_data, label_set = data_converting(raw_data)
     print("Training with: ", train_data)
     if model is not None:
         nlp = spacy.load(model)  # load existing spaCy model
@@ -53,7 +54,7 @@ def main(output_dir, data_path, n_iter, model=None):
     # otherwise, get it, so we can add labels to it
     else:
         ner = nlp.get_pipe("ner")
-    for l in labelset:
+    for l in label_set:
         ner.add_label(l)
 
     # Adding extraneous labels shouldn't mess anything up
@@ -76,14 +77,15 @@ def main(output_dir, data_path, n_iter, model=None):
                 nlp.update(texts, annotations, sgd=optimizer, drop=0.35, losses=losses)
                 print("Losses", losses)
                 sys.stdout.flush()
-    # save model to output directory
-    if output_dir is not None:
-        output_dir = Path(output_dir)
-        if not output_dir.exists():
-            output_dir.mkdir()
-        nlp.to_disk(output_dir)
-        print("Saved model to", output_dir)
-        sys.stdout.flush()
+
+    # Update model
+    output_dir = Path(model)
+    if not output_dir.exists():
+        output_dir.mkdir()
+    nlp.to_disk(output_dir)
+    print("Saved model to: ", output_dir)
+    sys.stdout.flush()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -97,7 +99,6 @@ if __name__ == '__main__':
         help="Path to the data directory."
     )
 
-
     parser.add_argument(
         '--iterations',
         type=int,
@@ -108,7 +109,6 @@ if __name__ == '__main__':
         default=None,
         help="Number of iterations to run."
     )
-
 
     args = parser.parse_args()
     print("args parsed")
