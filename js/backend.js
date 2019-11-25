@@ -52,7 +52,7 @@ $('#trainCurrent').on('click', function () {
     }
     // TODO: replace options
     var options = {
-        args: ['--model_output_dir', tagModel.currentModel, '--data_path', tagModel.exportAsString(), '--iterations', 30]
+        args: ['--raw_data', tagModel.exportAsString(), '--n_iter', 30, '--model', tagModel.currentModel]
     };
     // try app
     // TODO: replace with annotate all
@@ -85,7 +85,7 @@ $('#annotateBtn').on('click', function () {
     }
     // replace options
     var options = {
-        args: ['--model_path', tagModel.currentModel, '--data_path', tagModel.exportAsString()]
+        args: ['--model', tagModel.currentModel, '--raw_data', tagModel.exportAsString()]
     };
     // try app
     // TODO: replace with annotate all

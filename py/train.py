@@ -34,10 +34,10 @@ def data_converting(raw_data):
     return final_data, label_set
 
 
-def main(data_path, n_iter, model):
+def main(raw_data, n_iter, model):
     # """Set up the pipeline and entity recognizer, and train the new entity."""
     random.seed(0)
-    train_data, labelset = data_converting(data_path)
+    train_data, label_set = data_converting(raw_data)
     print("Training with: ", train_data)
     if model is not None:
         nlp = spacy.load(model)  # load existing spaCy model
@@ -54,7 +54,7 @@ def main(data_path, n_iter, model):
     # otherwise, get it, so we can add labels to it
     else:
         ner = nlp.get_pipe("ner")
-    for l in labelset:
+    for l in label_set:
         ner.add_label(l)
 
     # Adding extraneous labels shouldn't mess anything up
