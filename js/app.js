@@ -29,6 +29,9 @@ $(document).on("mousedown", function (e) {
 
 // download Zip
 $('#dlZip').on('click', function () {
+  exportZip();
+});
+function exportZip(){
   console.log("Zip export requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
@@ -49,8 +52,7 @@ $('#dlZip').on('click', function () {
         console.log("Created zip file: ", savePath);
     });
   });
-});
-
+}
 // download Json
 $('#dlJson').on('click', function () {
   console.log("JSON download requested...");

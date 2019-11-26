@@ -45,12 +45,13 @@ const template = [
     label: 'Document',
     submenu:[
       { label: 'Import Document',
-        click: getDocInput},
+        click: getDocInput },
       { type: 'separator'},
       { label: 'Export Current Document'},
       { label: 'Export All Documents',
         submenu: [
-          {label: 'As Zip'},
+          { label: 'As Zip',
+            click: exportZip },
           {label: 'As JSON'}
       ]}
     ]
@@ -112,7 +113,6 @@ const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
 function showSaveDialog(){
-
   dialog.showSaveDialog(remote.getCurrentWindow()).then(result => {
       console.log("Showing save dialog");
       if (result.filePath === undefined){
@@ -132,7 +132,6 @@ function showSaveDialog(){
           if(err){
               alert("An error ocurred creating the file "+ err.message);
             }
-
           alert("The file has been succesfully saved");
       });
   });
