@@ -29,15 +29,25 @@ $(document).on("mousedown", function (e) {
 
 // download Zip
 $('#dlZip').on('click', function () {
-  console.log("Zip download requested...");
+  console.log("Zip export requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to download!');
+    alert('Error: No data to export!');
     return;
   }
   let zip = tagModel.getAsZip();
-  zip.generateAsync({ type: "blob" }).then(function (content) {
-    saveAs(content, "annotations.zip");
+  dialog.showSaveDialog(remote.getCurrentWindow())
+  .then(result => {
+    let savePath = result.filePath;
+    if (path.extname(savePath) != '.zip') {
+      savePath += '.zip';
+    }
+    zip
+    .generateNodeStream({type:'nodebuffer',streamFiles:true})
+    .pipe(fs.createWriteStream(savePath))
+    .on('finish', function () {
+        console.log("Created zip file: ", savePath);
+    });
   });
 });
 
@@ -97,45 +107,45 @@ $('#dlJson').on('click', function () {
 //   // name matches one of the files already uploaded
 // }
 
-function uploadDocsFromZipFile(file) {
-  // load zip file
-  JSZip.loadAsync(file).then(function (zip) {
-    // do each file within zip
-    [].forEach.call(Object.keys(zip.files), function (fileName) {
-      if (tagModel.docIndex(fileName) !== -1) {
-        alert("File already uploaded for: '" + fileName + "' in zip");
-        return;
-      }
-      // mac compressed?
-      if (fileName.match(/^__MACOSX/g) !== null) {
-        alert("Ignored __MACOSX compression file: '" + fileName + "'");
-        return;
-      }
-      // find file format then add
-      zip.files[fileName].async('string').then(function (fileContents) {
-        // zip
-        if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
-          console.log("Found txt file: '" + fileName + "' in zip");
-          let newDoc = new Doc(fileName, fileContents.replace(/[\r\t\f\v\ ]+/g, " "));
-          addDoc(newDoc);
-        }
-        // json
-        else if (fileName.match(/.*\.json$/g) !== null) {
-          console.log("Found json file: '" + fileName + "' in zip");
-          let newJson = fileContents.replace(/[\r\t\f\v\ ]+/g, " ");
-          let errors = loadJsonData(JSON.parse(newJson));
-          if (errors.length > 0) {
-            alert(errors);
-          }
-        }
-        // wasn't one of the file types
-        else {
-          alert("File type not supported for: '" + fileName + "'\n");
-        }
-      });
-    });
-  });
-}
+// function uploadDocsFromZipFile(file) {
+//   // load zip file
+//   JSZip.loadAsync(file).then(function (zip) {
+//     // do each file within zip
+//     [].forEach.call(Object.keys(zip.files), function (fileName) {
+//       if (tagModel.docIndex(fileName) !== -1) {
+//         alert("File already uploaded for: '" + fileName + "' in zip");
+//         return;
+//       }
+//       // mac compressed?
+//       if (fileName.match(/^__MACOSX/g) !== null) {
+//         alert("Ignored __MACOSX compression file: '" + fileName + "'");
+//         return;
+//       }
+//       // find file format then add
+//       zip.files[fileName].async('string').then(function (fileContents) {
+//         // zip
+//         if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
+//           console.log("Found txt file: '" + fileName + "' in zip");
+//           let newDoc = new Doc(fileName, fileContents.replace(/[\r\t\f\v\ ]+/g, " "));
+//           addDoc(newDoc);
+//         }
+//         // json
+//         else if (fileName.match(/.*\.json$/g) !== null) {
+//           console.log("Found json file: '" + fileName + "' in zip");
+//           let newJson = fileContents.replace(/[\r\t\f\v\ ]+/g, " ");
+//           let errors = loadJsonData(JSON.parse(newJson));
+//           if (errors.length > 0) {
+//             alert(errors);
+//           }
+//         }
+//         // wasn't one of the file types
+//         else {
+//           alert("File type not supported for: '" + fileName + "'\n");
+//         }
+//       });
+//     });
+//   });
+// }
 
 // check a or d button pressed
 var aKeyPressed = false;
@@ -354,9 +364,7 @@ function getDocInput(){
     title: "Select a folder",
     properties: ['openFile', 'multiSelections'],
     filters: [{name: 'Docs', extensions: ['txt', 'json'] } ]
-
   }).then(function (data) {
-            // on close get file filePath
       let invalidFiles = "";
       data.filePaths.forEach((file) => {
         let name = path.basename(file);
