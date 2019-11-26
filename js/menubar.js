@@ -52,7 +52,8 @@ const template = [
         submenu: [
           { label: 'As Zip',
             click: exportZip },
-          {label: 'As JSON'}
+          { label: 'As JSON',
+            click: exportAllJson }
       ]}
     ]
   },
