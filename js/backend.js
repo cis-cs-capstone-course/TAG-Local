@@ -46,23 +46,24 @@ $('#loadNew').on('click', function () {
 
 // try training
 $('.trainButton').on('click', function () {
+  if (this.id === "loadNew") {
+    return;
+  }
   var isAllDocuments;
 
-  if (this.id === "trainAll") {
+  if (this.id === "trainAll" || this.id === "trainThis") {
     if (tagModel.currentDoc == null) {
       alert("Please upload a document first!");
       return
     }
-    console.log("Annotating all documents...");
-    isAllDocuments = true;
-  }
-  else if (this.id === "trainThis"){
-    if (tagModel.currentDoc == null) {
-      alert("Please upload a document first!");
-      return
+    if (this.id === "trainAll") {
+      console.log("Annotating all documents...");
+      isAllDocuments = true;
     }
-    console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
-    isAllDocuments = false;
+    else {
+      console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
+      isAllDocuments = false;
+    }
   }
 
   // TODO: replace options
@@ -94,22 +95,22 @@ $('.trainButton').on('click', function () {
 });
 
 $('.annButton').on('click', function () {
-  if (!tagModel.currentModel) {
-      alert("Please add a model first");
-      return;
-  }
+  var isAllDocuments;
 
+  if (!tagModel.currentModel) {
+    alert("Please add a model first!");
+    return;
+  }
   if (tagModel.currentDoc == null) {
     alert("Please upload a document first!");
     return
   }
-  var isAllDocuments;
 
   if (this.id === "annAll") {
     console.log("Annotating all documents...");
     isAllDocuments = true;
   }
-  else {
+  else if (this.id === "annThis"){
     console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
     isAllDocuments = false;
   }
