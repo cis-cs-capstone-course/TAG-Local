@@ -31,6 +31,12 @@ $(document).on("mousedown", function (e) {
 $('#dlZip').on('click', function () {
   exportZip();
 });
+
+$('#dlJson').on('click', function () {
+  exportAllJson();
+});
+
+
 function exportZip(){
   console.log("Zip export requested...");
   // no files found
@@ -53,17 +59,30 @@ function exportZip(){
     });
   });
 }
-// download Json
-$('#dlJson').on('click', function () {
+
+function exportAllJson(){
   console.log("JSON download requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
     alert('Error: No data to download!');
     return;
   }
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
-  saveAs(blob, "annotations.json");
-});
+
+  dialog.showSaveDialog(remote.getCurrentWindow())
+  .then((result) => {
+    let savePath = result.filePath;
+    if(path.extname(savePath) != '.json') {
+      savePath += '.json';
+    }
+    fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
+        if(err){
+            alert("An error ocurred creating the file "+ err.message);
+          }
+        alert("Succesfully saved: ", savePath);
+        console.log("Saved file: ", savePath);
+    });
+  });
+}
 
 //TODO : EVENTUALLY replace uploadDocFromFile with getDocInput (below)
 // function uploadDocFromFile(file) {
