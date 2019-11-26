@@ -6,14 +6,13 @@ var PythonShell = require('python-shell');
 // paths to apps // please add new scripts, thx
 // var pyScript = path.join(__dirname, '/../py/hello.py');
 // var pyScriptLocal = path.join(__dirname, '/py/hello.py');
-let trainScript = path.join(__dirname, '..', 'py', 'train.py');
+let trainScript = path.join(__dirname, 'py', 'train.py');
 let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
-let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
+let annotateScript = path.join(__dirname, 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 
 // file path picker is open
 var dialogOpen = false;
-
 // hide things supposed to be hidden
 $('#trainAll').hide();
 $('#trainThis').hide();
@@ -47,24 +46,21 @@ $('#loadNew').on('click', function () {
 
 // try training
 $('.trainButton').on('click', function () {
-  // no path
-  if (!tagModel.currentModel) {
-      alert("Please add a model path");
-      return;
-  }
-
-  if (tagModel.currentDoc == null) {
-  alert("Please upload a document first!");
-  return
-  }
-
   var isAllDocuments;
 
   if (this.id === "trainAll") {
+    if (tagModel.currentDoc == null) {
+      alert("Please upload a document first!");
+      return
+    }
     console.log("Annotating all documents...");
     isAllDocuments = true;
   }
-  else {
+  else if (this.id === "trainThis"){
+    if (tagModel.currentDoc == null) {
+      alert("Please upload a document first!");
+      return
+    }
     console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
     isAllDocuments = false;
   }
@@ -155,7 +151,7 @@ $('.annButton').on('click', function () {
 launchPy = function (file, options = null) {
     return new Promise(function (resolve, reject) {
         $(document.body).css('cursor', 'wait');
-        console.log('Attempting to Lanuch "' + file + '"');
+        console.log('Attempting to Launch "' + file + '"');
         var pyshell = new PythonShell.PythonShell(file, options);
 
         var returned = [];      // returned values
