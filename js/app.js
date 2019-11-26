@@ -11,6 +11,10 @@ var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
 var mostRecentIndex = -1;
+var path = require('path');
+const { dialog } = require('electron').remote;
+
+
 // --------------events-------------- //
 
 // clicked anywhere
@@ -49,92 +53,49 @@ $('#dlJson').on('click', function () {
   saveAs(blob, "annotations.json");
 });
 
-// send to mldata
-$('#sendML').on('click', function () {
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to send!');
-    return;
-  }
-  // prepare data
-
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
-  var formData = new FormData();
-  console.log("Sending data to ML");
-
-  formData.append("jsonUpload", blob)
-    .append("save-model", $("#save-model").is(':checked'))
-    .append("load-model", $("#load-model").is(':checked'));
-  $.ajax({
-    type: "POST",
-    url: "mldata",
-    contentType: false,
-    processData: false,
-    cache: false,
-    enctype: "multipart/form-data",
-    data: formData,
-    success: function (data) {
-      console.log("Data received from algorithm");
-      loadJsonData(data, obliterate = true);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      console.log("Send failed: \nStatus: " + textStatus + "\nError: " + errorThrown);
-    }
-  });
-});
-
-// add document
-$("#fileInputControl").on("change", function () {
-  console.log("Found " + this.files.length + " files");
-  // add each file to documents
-  [].forEach.call(this.files, function (file) {
-    uploadDocFromFile(file);
-  });
-  this.value = "";
-});
-
-function uploadDocFromFile(file) {
-  // clean up name of string and check if already belongs
-  let fileName = file.name.replace(/\s+/g, "_").replace(/[^A-Za-z0-9\.\-\_]/g, '');
-  if (tagModel.docIndex(fileName) !== -1) {
-    alert("File already uploaded for: '" + fileName + "'\n");
-  }
-  // txt
-  if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
-    console.log("Found txt file: '" + fileName + "'");
-    // read, create, and add file
-    let fileReader = new FileReader(file);
-    fileReader.onload = function () {
-      let newDoc = new Doc(fileName, fileReader.result.replace(/[\r\t\f\v\ ]+/g, " "));
-      addDoc(newDoc);
-    };
-    fileReader.readAsText(file);
-  }
-  // json
-  else if (fileName.match(/.*\.json$/g) !== null) {
-    console.log("Found json file: '" + fileName + "'");
-    // read, create, and add file
-    let fileReader = new FileReader(file);
-    fileReader.onload = function () {
-      let newJson = fileReader.result.replace(/[\r\t\f\v\ ]+/g, " ");
-      let errors = loadJsonData(JSON.parse(newJson));
-      if (errors.length > 0) {
-        alert(errors);
-      }
-    };
-    fileReader.readAsText(file);
-  }
-  // zip
-  else if (fileName.match(/.*\.zip$/g) !== null) {
-    console.log("Found zip file: '" + fileName + "'");
-    uploadDocsFromZipFile(file);
-  }
-  // wasn't one of the file types
-  else {
-    alert("File type not supported for: '" + fileName + "'");
-  }
-  // name matches one of the files already uploaded
-}
+//TODO : EVENTUALLY replace uploadDocFromFile with getDocInput (below)
+// function uploadDocFromFile(file) {
+//   // clean up name of string and check if already belongs
+//   let fileName = file.name.replace(/\s+/g, "_").replace(/[^A-Za-z0-9\.\-\_]/g, '');
+//   if (tagModel.docIndex(fileName) !== -1) {
+//     alert("File already uploaded for: '" + fileName + "'\n");
+//   }
+//   // txt
+//   if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
+//     console.log("Found txt file: '" + fileName + "'");
+//     // read, create, and add file
+//     let fileReader = new FileReader(file);
+//     fileReader.onload = function () {
+//       let newDoc = new Doc(fileName, fileReader.result.replace(/[\r\t\f\v\ ]+/g, " "));
+//       addDoc(newDoc);
+//     };
+//     fileReader.readAsText(file);
+//   }
+//   // json
+//   else if (fileName.match(/.*\.json$/g) !== null) {
+//     console.log("Found json file: '" + fileName + "'");
+//     // read, create, and add file
+//     let fileReader = new FileReader(file);
+//     fileReader.onload = function () {
+//       let newJson = fileReader.result.replace(/[\r\t\f\v\ ]+/g, " ");
+//       let errors = loadJsonData(JSON.parse(newJson));
+//       if (errors.length > 0) {
+//         alert(errors);
+//       }
+//     };
+//     fileReader.readAsText(file);
+//   }
+//   // zip
+//   else if (fileName.match(/.*\.zip$/g) !== null) {
+//     console.log("Found zip file: '" + fileName + "'");
+//     uploadDocsFromZipFile(file);
+//   }
+//   // wasn't one of the file types
+//   else {
+//     alert("File type not supported for: '" + fileName + "'");
+//   }
+//   // name matches one of the files already uploaded
+// }
 
 function uploadDocsFromZipFile(file) {
   // load zip file
@@ -385,10 +346,37 @@ $('#colorChangePicker').on('change', function () {
 
 // add document button
 $('#add-document').on('click', function () {
-  // todo add name checking // no spaces
-  $('#fileInputControl').click();
+  getDocInput();
 });
 
+function getDocInput(){
+  dialog.showOpenDialog(remote.getCurrentWindow(), {
+    title: "Select a folder",
+    properties: ['openFile', 'multiSelections'],
+    filters: [{name: 'Docs', extensions: ['txt', 'json'] } ]
+
+  }).then(function (data) {
+            // on close get file filePath
+      let invalidFiles = "";
+      data.filePaths.forEach((file) => {
+        let name = path.basename(file);
+        let extension = path.extname(file);
+        let content = fs.readFileSync(file, 'utf8');
+        if (extension == '.json') {
+          loadJsonData(JSON.parse(content));
+        } else {
+          let doc = new Doc(name, content);
+          if (!addDoc(doc)) {
+            invalidFiles += "Already added " + doc.title + "\n";
+            console.log("Already added ", doc.title);
+          }
+        }
+      });
+      if (invalidFiles != "") {
+        alert(invalidFiles);
+      }
+  });
+}
 // change document
 doc_list.on('mouseup', '.doc-name', function (e) {
   tagModel.setCurrentDoc(this.getAttribute('value'));
@@ -504,23 +492,27 @@ $(window).on('resize', function () {
 
 //add new document
 function addDoc(doc) {
-  tagModel.addDoc(doc);
-  tagModel.setCurrentDoc(doc.title.escapeHtml());
-  textArea.text(tagModel.currentDoc.text.escapeHtml());
-  resize();
-  $('#doc-selected').attr('id', '');
-  doc_list.append(
-    $('<h6/>', {
-      id: 'doc-selected',
-      class: 'doc-name hoverWhite',
-      value: doc.title.escapeHtml(),
-      html: doc.title.escapeHtml()
-    })
-  );
-  mostRecentIndex = -1;
-  renderHighlights();
-  doc_list.scrollTop(doc_list.prop('scrollHeight'));
-};
+  if (tagModel.addDoc(doc)) {
+    tagModel.setCurrentDoc(doc.title.escapeHtml());
+    textArea.text(tagModel.currentDoc.text.escapeHtml());
+    resize();
+    $('#doc-selected').attr('id', '');
+    doc_list.append(
+      $('<h6/>', {
+        id: 'doc-selected',
+        class: 'doc-name hoverWhite',
+        value: doc.title.escapeHtml(),
+        html: doc.title.escapeHtml()
+      })
+    );
+    mostRecentIndex = -1;
+    renderHighlights();
+    doc_list.scrollTop(doc_list.prop('scrollHeight'));
+    return true;
+  } else {
+    return false;
+  }
+}
 
 //add new label
 function addLabel(name, color = null) {
@@ -595,7 +587,7 @@ function makeRandColor() {
 }
 
 // import json data
-function loadJsonData(data, filename = "", obliterate = false, ) {
+function loadJsonData(data, filename = "", obliterate = false) {
   if (obliterate) {
     console.log('Displaying new data');
     tagModel = new TagModel();

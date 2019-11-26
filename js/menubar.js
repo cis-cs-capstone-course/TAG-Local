@@ -3,7 +3,7 @@
 //jshint esversion:6
 // const { remote } = require('electron');
 var fs = require('fs');
-const { dialog, app, Menu, MenuItem } = remote;
+const { app, Menu, MenuItem } = remote;
 
 const isMac = process.platform === 'darwin';
 var dialogOpen = false;
@@ -44,7 +44,8 @@ const template = [
   {
     label: 'Document',
     submenu:[
-      { label: 'Import Document'},
+      { label: 'Import Document',
+        click: getDocInput},
       { type: 'separator'},
       { label: 'Export Current Document'},
       { label: 'Export All Documents',
@@ -101,11 +102,7 @@ const template = [
     role: 'help',
     submenu: [
       {
-        label: 'Learn More',
-        click: async () => {
-          const { shell } = require('electron')
-          await shell.openExternal('https://electronjs.org')
-        }
+        label: 'Learn More'
       }
     ]
   }
@@ -115,8 +112,9 @@ const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
 function showSaveDialog(){
-  console.log("Showing save dialog");
-  dialog.showSaveDialog().then(result => {
+
+  dialog.showSaveDialog(remote.getCurrentWindow()).then(result => {
+      console.log("Showing save dialog");
       if (result.filePath === undefined){
           console.log("You didn't save the file");
           return;
@@ -132,7 +130,7 @@ function showSaveDialog(){
     //TODO: validate filePath has tagProj extension, if not, add.
       fs.writeFile(filePath, JSON.stringify(tagModel), (err) => {
           if(err){
-              alert("An error ocurred creating the file "+ err.message)
+              alert("An error ocurred creating the file "+ err.message);
             }
 
           alert("The file has been succesfully saved");
