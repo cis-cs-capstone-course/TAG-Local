@@ -124,11 +124,13 @@ function showSaveDialog(){
         console.log("You canceled the save");
         return;
       }
-
-      filePath = result.filePath  + '.tagProj';
+      var filePath = result.filePath;
+      if (path.extname(filePath) != '.tagProj') {
+        filePath += '.tagProj';
+       }
       console.log("saving file @ ", filePath);
     // fileName is a string that contains the path and filename created in the save file dialog.
-    //TODO: validate filePath has tagProj extension, if not, add.
+
       fs.writeFile(filePath, JSON.stringify(tagModel), (err) => {
           if(err){
               alert("An error ocurred creating the file "+ err.message);
