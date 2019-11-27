@@ -566,7 +566,7 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
   if (obliterate) {
     console.log('Displaying new data');
 
-    jQuery.each(data, function() {
+    $.each(data, function() {
       tagModel.deleteDoc(this.title);
       $('.doc-name[value="' + this.title + '"]').remove();
     });
@@ -578,7 +578,7 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
   // add remove annotation from annotation list
   try {
     // json array
-    jQuery.each(data, function () {
+    $.each(data, function () {
       addJsonElement(this);
     });
   } catch (err) {
