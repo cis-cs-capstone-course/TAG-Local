@@ -30,13 +30,14 @@ const template = [
   {
     label: 'Project',
     submenu: [
-      {label: 'New Project'},
-      {label: 'Open Project'},
-      {type: 'separator'},
-      {label: 'Save Project',
-      click: showSaveDialog
+      { label: 'New Project'  },
+      { label: 'Open Project' },
+      { type: 'separator' },
+      { label: 'Save Project',
+        click: saveProject
       },
-      {label: 'Save Project As'},
+      { label: 'Save Project As',
+        click: saveProjectAs  },
     ]
   },
 
@@ -74,8 +75,8 @@ const template = [
   {
     label: 'Machine Learning',
     submenu: [
-      { label: 'New Model'},
-      { label: 'Load Model'},
+      { label: 'Create Blank Model'},
+      { label: 'Load Existing Model'},
       { type: 'separator'},
       { label: 'Train Current Document'},
       { label: 'Train All Documents'},
@@ -113,9 +114,9 @@ const template = [
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
-function showSaveDialog(){
+function saveProjectAs(){
   dialog.showSaveDialog(remote.getCurrentWindow()).then(result => {
-      console.log("Showing save dialog");
+      console.log("Showing save as dialog");
       if (result.filePath === undefined){
           console.log("You didn't save the file");
           return;
@@ -127,15 +128,25 @@ function showSaveDialog(){
       var filePath = result.filePath;
       if (path.extname(filePath) != '.tagProj') {
         filePath += '.tagProj';
-       }
-      console.log("saving file @ ", filePath);
-    // fileName is a string that contains the path and filename created in the save file dialog.
+      }
+      tagModel.projectPath = filePath;
+      saveProject();
+  });
+}
 
-      fs.writeFile(filePath, JSON.stringify(tagModel), (err) => {
-          if(err){
-              alert("An error ocurred creating the file "+ err.message);
-            }
-          alert("The file has been succesfully saved");
-      });
+function saveProject(){
+  let filePath = tagModel.projectPath;
+  if (filePath == null) {
+    console.log("No save path detected, calling saveProjectAs");
+    saveProjectAs();
+    return;
+  }
+  console.log("saving file @ ", filePath);
+
+  fs.writeFile(filePath, JSON.stringify(tagModel), (err) => {
+      if(err){
+          alert("An error ocurred creating the file " + err.message);
+        }
+      alert("The file has been succesfully saved");
   });
 }
