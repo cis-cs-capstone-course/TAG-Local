@@ -7,7 +7,6 @@ var tagModel = new TagModel();
 var textArea = $('#doc-view');
 var highlightArea = $('#highlightArea');
 var label_list = $('#label-list');
-var label_selected = $('#label-selected');
 var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
@@ -324,7 +323,7 @@ label_list.on('blur', '.label-name', function () {
   );
 
   // update category name in list
-  label_selected.attr('value', newName);
+  $('#label-selected').attr('value', newName);
 
   tagModel.renameCategory(newName);
   renderHighlights();
@@ -341,7 +340,7 @@ $('#colorChangePicker').on('change', function () {
   console.log('colorPicked: ' + this.value);
 
   //update colors on page
-  label_selected.css('background-color', this.value);
+  $('#label-selected').css('background-color', this.value);
   $('#' + tagModel.currentCategory + '-style').html(
     '.hwt-content .label_' + tagModel.currentCategory + ' {background-color: ' + this.value + ';}'
   );
@@ -431,7 +430,7 @@ delete_menu.on('click', 'li', function () {
     tagModel.deleteCategory();
     console.log('Category Deleted');
     resize();
-    label_selected.remove();
+    $('#label-selected').remove();
     if (tagModel.currentDoc != null) {
       $('.label[value="' + tagModel.currentCategory + '"]').attr('id', 'label-selected');
     }
@@ -508,7 +507,7 @@ function addLabel(name, color = null) {
 
     // select new category
     tagModel.currentCategory = name;
-    label_selected.attr('id', '');
+    $('#label-selected').attr('id', '');
 
     // add category to page
     var newLabel = $('<div/>', {
