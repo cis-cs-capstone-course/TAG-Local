@@ -146,6 +146,19 @@ $('.annButton').on('click', function () {
   };
 });
 
+$('.createModel').on('click', function () {
+  // open file picker
+  // store path (var chosenPath) as argument
+  // invoke create.py(chosenPath)
+
+  // on success
+    // set tagModel.currentModel = chosenPath
+    // display hidden train buttons if not already shown
+    // collect $200
+  // on fail
+    // prompt with error
+});
+
 // launches script
 // get messages and add to console
 // return on end
