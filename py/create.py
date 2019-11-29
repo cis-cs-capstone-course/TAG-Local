@@ -4,8 +4,8 @@ from pathlib import Path
 import spacy
 from spacy.util import minibatch, compounding
 
-
 train_data = []
+
 
 def main(model_path):
     nlp = spacy.blank("en")  # create blank Language class
@@ -28,12 +28,19 @@ def main(model_path):
             texts, annotations = zip(*batch)
             nlp.update(texts, annotations, sgd=optimizer, drop=0.35, losses=losses)
 
-
     # save model
     output_dir = Path(model_path)
-    nlp.to_disk(output_dir)
-    print("Saved model to: ", output_dir)
-    sys.stdout.flush()
+
+    if not output_dir.exists():
+        output_dir.mkdir()
+        nlp.to_disk(output_dir)
+        print("Saved model to: ", output_dir)
+        sys.stdout.flush()
+        return 0
+    else:
+        print("Model already exists!")
+        return 1
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
