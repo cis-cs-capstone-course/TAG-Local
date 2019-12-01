@@ -7,6 +7,7 @@ var tagModel = new TagModel();
 var textArea = $('#doc-view');
 var highlightArea = $('#highlightArea');
 var label_list = $('#label-list');
+var hiddenAnno_list = [];
 var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
@@ -457,6 +458,7 @@ delete_menu.on('click', 'li', function () {
     mostRecentIndex = -1;
   }
   renderHighlights();
+  clearSelection();
 });
 
 // update size when window is resized
@@ -669,7 +671,9 @@ function renderHighlights() {
         value: category[0][0].label
       })
     );
-    annoHeader.click();
+    if (hiddenAnno_list.indexOf(category[0][0].label) !== -1) {
+      annoHeader.click();
+    }
     // create highlight area
     var highlights = $('<div/>', {
       class: "hwt-highlights hwt-content"

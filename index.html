@@ -2,64 +2,19 @@
 <html>
 
 <head>
+    <style>
+    </style>
     <link href="css/styles.css" rel="stylesheet">
     <link href="css/highlight.css" rel="stylesheet">
-    <style>
-        #consoleContainer {
-            position: absolute;
-            margin: -2em;
-            bottom: 2em;
-            width: 100%;
-            height: 1vh;
-            transition: height 0.3s ease;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        #console {
-            position: absolute;
-            bottom: 0;
-            margin: 0;
-            width: calc(100% - 4em);
-            height: 100%;
-            background-color: black;
-            color: lime;
-            padding: 0 2em 1em 2em;
-            font-size: 14px;
-            overflow-y: scroll;
-            font-family: 'Courier New', Courier, monospace;
-            text-align: left;
-        }
-
-        #console::-webkit-scrollbar {
-            display: none;
-        }
-
-        #console li {
-            list-style-type: none;
-            padding-left: 1em;
-            text-indent: -1em;
-        }
-
-        #consoleArrow {
-            z-index: 1;
-            position: absolute;
-            margin-top: -2.5em;
-            margin-left: -1em;
-            transition: transform 0.3s ease, content 0.3s ease;
-        }
-
-        #rightArrow {
-            margin-left: -4.3em;
-            margin-top: 45vh;
-            transform: rotateZ(90deg);
-            position: fixed;
-        }
-    </style>
 </head>
 
 <body>
     <div id="draggable"></div>
+    <div id="splash">
+        <div id="splashBg"></div>
+        <img id="splashIcon" src="images/Tag.gif" />
+    </div>
+
     <div id="leftContainer" class="container">
         <div id="logoContainer">
             <img id="logo" src="images/Tag1.png" alt="" />
@@ -148,10 +103,10 @@
         <hr>
         <div id="recentArea">
             <h2>Most Recent Highlight</h2>
-                <ul class="anno-group">
-                    <li id="recent" class="annotation hoverWhite"></li>
-                </ul>
-                <hr>
+            <ul class="anno-group">
+                <li id="recent" class="annotation hoverWhite"></li>
+            </ul>
+            <hr>
         </div>
         <div id='anno-list'></div>
         <div id=consoleContainer>
@@ -180,6 +135,7 @@
     <script src="js/search.js"></script>
     <script src="js/menu.js"></script>
     <script src="js/backend.js"></script>
+    <script src="js/splash.js"></script>
     <script src="./renderer.js"></script>
 </body>
 
