@@ -84,8 +84,10 @@ const template = [
       { label: 'Train All Documents',
         click:  trainAllDocuments },
       { type: 'separator'},
-      { label: 'Annotate Current Document'},
-      { label: 'Annotate All Documents'},
+      { label: 'Annotate Current Document',
+        click: annotateCurrentDocument  },
+      { label: 'Annotate All Documents',
+        click: annotateAllDocuments },
     ]
   },
    // { role: 'windowMenu' }

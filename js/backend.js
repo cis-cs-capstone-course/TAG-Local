@@ -11,8 +11,6 @@ let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
 let annotateScript = path.join(__dirname, 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 
-// file path picker is open
-// var dialogOpen = false;
 // hide things supposed to be hidden
 $('#trainAll').hide();
 $('#trainThis').hide();
@@ -20,7 +18,6 @@ $('#modelPath').hide();
 
 // add new model path
 $('#loadNew').on('click', loadExistingML);
-// });
 
 function loadExistingML(){
   console.log("Opening directory picker");
@@ -45,77 +42,49 @@ $('.trainButton').on('click', function () {
   if (this.id === "loadNew") {
     return;
   }
-  var isAllDocuments;
-
   if (this.id === "trainAll" || this.id === "trainThis") {
-  //   if (tagModel.currentDoc == null) {
-  //     alert("Please upload a document first!");
-  //     return;
-  //   }
-
     if (this.id === "trainAll") {
-      console.log("Training all documents...");
       trainAllDocuments();
     }
     else {
-      console.log("Training current document: \"" + tagModel.currentDoc.title + "\"");
       trainCurrentDocument();
     }
-    // beginTraining(isAllDocuments);
   }
-  //
-  // // TODO: replace options
-  // var options = {
-  //     args: ['--raw_data', tagModel.jsonifyData(isAllDocuments), '--n_iter', 30, '--model', tagModel.currentModel]
-  // };
-  // // try app
-  // // TODO: replace with annotate all
-  // let pyReturn;
-  // // try installer path
-  // launchPy(trainScript, options).then(function (data) {
-  //     pyReturn = data;
-  //     alert('!');
-  //     next();
-  // }).catch(function () {
-  //     //try compiled path
-  //     launchPy(trainScriptLocal, options).then(function (data) {
-  //         pyReturn = data;
-  //         alert('!!!');
-  //         next();
-  //     }).catch(function () {
-  //         // still didn't work
-  //         if (!pyReturn) {
-  //             alert('Something went wrong');
-  //             return -1;
-  //         }
-  //     });
-  // });
 });
 
+//shared execution path for menu AND button  (all docs)
 function trainAllDocuments(){
+  console.log("Training all documents...");
   beginTraining(isAllDocuments = true);
 }
+
+//shared execution path for menu AND button (current doc)
 function trainCurrentDocument(){
+  console.log("Training current document...");
   beginTraining(isAllDocuments = false);
 }
 
 function beginTraining(isAllDocuments){
     if (tagModel.currentDoc == null) {
+      console.log("No document uploaded, training aborted");
       alert("Please upload a document first!");
       return;
     }
-    // TODO: replace options
+    if (!tagModel.currentModel) {
+      console.log("No model selected, training aborted");
+      alert("Please select or create a model first!");
+      return;
+    }
     var options = {
         args: ['--raw_data', tagModel.jsonifyData(isAllDocuments), '--n_iter', 30, '--model', tagModel.currentModel]
     };
     // try app
-    // TODO: replace with annotate all
     let pyReturn;
     // try installer path
     launchPy(trainScript, options).then(function (data) {
         pyReturn = data;
         alert('Training Complete!');
-        //falling through
+        //falling through ?
         next();
     }).catch(function () {
         //try compiled path
@@ -131,35 +100,48 @@ function beginTraining(isAllDocuments){
             }
         });
     });
+
+    next = function () {
+        console.log(pyReturn);
+    };
 }
 
 $('.annButton').on('click', function () {
-  var isAllDocuments;
-
-  if (!tagModel.currentModel) {
-    alert("Please add a model first!");
-    return;
-  }
-  if (tagModel.currentDoc == null) {
-    alert("Please upload a document first!");
-    return;
-  }
-
   if (this.id === "annAll") {
-    console.log("Annotating all documents...");
-    isAllDocuments = true;
+    annotateAllDocuments();
   }
   else if (this.id === "annThis"){
-    console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
-    isAllDocuments = false;
+    annotateCurrentDocument();
   }
+});
 
-  // replace options
+function annotateAllDocuments(){
+  console.log("Annotating all documents...");
+  beginAnnotating(isAllDocuments = true);
+}
+
+function annotateCurrentDocument(){
+  console.log("Annotating current document...");
+  beginAnnotating(isAllDocuments = false);
+}
+
+
+function beginAnnotating(isAllDocuments){
+    if (!tagModel.currentModel) {
+      console.log("No model selected, annotation aborted!");
+      alert("Please add a model first!");
+      return;
+    }
+    if (tagModel.currentDoc == null) {
+      console.log("No document selected, annotation aborted!");
+      alert("Please upload a document first!");
+      return;
+    }
+
   var options = {
       args: ['--model', tagModel.currentModel, '--raw_data', tagModel.jsonifyData(isAllDocuments)]
   };
-  // try app
-  // TODO: replace with annotate all
+
   let pyReturn;
   launchPy(annotateScript, options).then(function (data) {
       pyReturn = data;
@@ -185,8 +167,7 @@ $('.annButton').on('click', function () {
   next = function () {
       console.log(pyReturn);
   };
-});
-
+}
 // launches script
 // get messages and add to console
 // return on end
@@ -234,11 +215,15 @@ launchPy = function (file, options = null) {
     });
 };
 
+//Load annoations from ML
 displayAnnotations = function() {
   const fs = require('fs');
+  //read and parse json data from ml output file
+  console.log("Preparing to read data from data.json");
   let rawContent = fs.readFileSync('data.json');
   let jsonContent = JSON.parse(rawContent);
   console.log("ML returned \n", jsonContent);
+  //load json data
   let errors = loadJsonData(jsonContent, "", obliterate = true);
   if(errors.count > 0) {
     console.log('error displaying ml data: ', errors);
