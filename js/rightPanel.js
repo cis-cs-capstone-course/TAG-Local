@@ -57,7 +57,7 @@ $('#anno-list').on('click', '.annoHeader', function () {
 
 // right clicked annotation // bring up delete prompt
 $('#anno-list').on('contextmenu', '.annotation', function (e) {
-    event.preventDefault();
+    e.preventDefault();
     delete_menu.append(
         $('<li/>', {
             class: 'delete-anno-list',
@@ -73,7 +73,7 @@ $('#anno-list').on('contextmenu', '.annotation', function (e) {
 
 // right clicked most recent annotation // bring up delete prompt
 $('#recent').on('contextmenu', function (e) {
-    event.preventDefault();
+    e.preventDefault();
     delete_menu.append(
         $('<li/>', {
             class: 'delete-anno-list',

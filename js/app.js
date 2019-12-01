@@ -6,7 +6,7 @@
 var tagModel = new TagModel();
 var textArea = $('#doc-view');
 var highlightArea = $('#highlightArea');
-var label_list = $("#label-list");
+var label_list = $('#label-list');
 var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
@@ -45,42 +45,8 @@ $('#dlJson').on('click', function () {
     alert('Error: No data to download!');
     return;
   }
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
-  saveAs(blob, "annotations.json");
-});
-
-// send to mldata
-$('#sendML').on('click', function () {
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to send!');
-    return;
-  }
-  // prepare data
-
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
-  var formData = new FormData();
-  console.log("Sending data to ML");
-
-  formData.append("jsonUpload", blob)
-    .append("save-model", $("#save-model").is(':checked'))
-    .append("load-model", $("#load-model").is(':checked'));
-  $.ajax({
-    type: "POST",
-    url: "mldata",
-    contentType: false,
-    processData: false,
-    cache: false,
-    enctype: "multipart/form-data",
-    data: formData,
-    success: function (data) {
-      console.log("Data received from algorithm");
-      loadJsonData(data, obliterate = true);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      console.log("Send failed: \nStatus: " + textStatus + "\nError: " + errorThrown);
-    }
-  });
+  var blob = new Blob([tagModel.jsonifyData(false)], { type: 'application/JSON' });
+  saveAs(blob, tagModel.currentDoc.title + ".json");
 });
 
 // add document
@@ -472,7 +438,7 @@ delete_menu.on('click', 'li', function () {
   }
   // delete document
   else if ($(this).hasClass('delete-doc')) {
-    tagModel.deleteDoc();
+    tagModel.deleteDoc(tagModel.currentDoc.title);
     console.log('Document Deleted');
     if (tagModel.currentDoc != null) {
       textArea.text(tagModel.currentDoc.text.escapeHtml());
@@ -520,7 +486,7 @@ function addDoc(doc) {
   mostRecentIndex = -1;
   renderHighlights();
   doc_list.scrollTop(doc_list.prop('scrollHeight'));
-};
+}
 
 //add new label
 function addLabel(name, color = null) {
@@ -560,10 +526,10 @@ function addLabel(name, color = null) {
       }).text(name)
     );
 
-    $('#label-list').append(newLabel);
+    label_list.append(newLabel);
 
     // go to new label's postion
-    $('#label-list').scrollTop($('#label-list').prop('scrollHeight'));
+    label_list.scrollTop(label_list.prop('scrollHeight'));
 
     // first color => make current category the color
     tagModel.currentCategory = name;
@@ -598,10 +564,11 @@ function makeRandColor() {
 function loadJsonData(data, filename = "", obliterate = false, ) {
   if (obliterate) {
     console.log('Displaying new data');
-    tagModel = new TagModel();
-    $('.label').remove();
-    $('.highlight-style').remove();
-    $('.doc-name').remove();
+
+    $.each(data, function() {
+      tagModel.deleteDoc(this.title);
+      $('.doc-name[value="' + this.title + '"]').remove();
+    });
   }
 
   // for invalid files
@@ -610,8 +577,8 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
   // add remove annotation from annotation list
   try {
     // json array
-    data.forEach(function (doc) {
-      addJsonElement(doc);
+    $.each(data, function () {
+      addJsonElement(this);
     });
   } catch (err) {
     // caught an error
@@ -620,7 +587,7 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
       try {
         addJsonElement(data);
       } catch (innerErr) {
-        alert("Not valid json Input")
+        console.log("Not valid JSON input");
       }
     }
     // we shouldn't be here
@@ -743,7 +710,7 @@ function renderHighlights() {
     );
   }
   // update most recent
-  if (mostRecentIndex != -1) {
+  if (mostRecentIndex !== -1) {
     $('#recent').text(tagModel.currentDoc.annotations[mostRecentIndex].content.trunc(20, true).escapeHtml()).css('background-color', tagModel.getColor(tagModel.currentDoc.annotations[mostRecentIndex].label)).attr('value', mostRecentIndex);
     $('#recentArea').css('display', 'block');
   }
@@ -765,7 +732,7 @@ function jumpToAnno(num) {
 // pass as safe text
 String.prototype.escapeHtml = function () {
   return this.replace(/<|>/g, "_");
-}
+};
 
 // truncate string and add ellipsis // truncAfterWord will only truncate on spaces // returns entire word if string contains no spaces
 String.prototype.trunc = function (n, truncAfterWord = false) {

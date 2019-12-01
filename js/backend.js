@@ -6,23 +6,20 @@ var PythonShell = require('python-shell');
 // paths to apps // please add new scripts, thx
 // var pyScript = path.join(__dirname, '/../py/hello.py');
 // var pyScriptLocal = path.join(__dirname, '/py/hello.py');
-let trainScript = path.join(__dirname, '..', 'py', 'train.py');
+let trainScript = path.join(__dirname, 'py', 'train.py');
 let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
-let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
+let annotateScript = path.join(__dirname, 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
 
-// modePath
-var modelName = 'untitledModel';
-var modelPath = null;
 // file path picker is open
 var dialogOpen = false;
-
 // hide things supposed to be hidden
-$('#trainCurrent').hide();
-$('#trainName').hide();
+$('#trainAll').hide();
+$('#trainThis').hide();
+$('#modelPath').hide();
 
 // add new model path
-$('#trainNew').on('click', function () {
+$('#loadNew').on('click', function () {
     // check file path is open
     if (!dialogOpen) {
         // is not open // open
@@ -35,9 +32,10 @@ $('#trainNew').on('click', function () {
             // on close get file path
             if (data.filePaths[0]) {
                 console.log("Changing paths to: '" + data.filePaths[0] + "'");
-                modelPath = path.join(data.filePaths[0].goodPath(), modelName);
-                $('#trainCurrent').show();
-                $('#trainName').text(modelPath.truncStart(30, true)).show();
+                tagModel.currentModel = data.filePaths[0].goodPath();
+                $('#trainAll').show();
+                $('#trainThis').show();
+                $('#modelPath').text(tagModel.currentModel.truncStart(30, true)).show();
             }
             dialogOpen = false;
         });
@@ -47,81 +45,114 @@ $('#trainNew').on('click', function () {
 });
 
 // try training
-$('#trainCurrent').on('click', function () {
-    // no path
-    if (!modelPath) {
-        alert("Please add a model path");
-        return;
+$('.trainButton').on('click', function () {
+  if (this.id === "loadNew") {
+    return;
+  }
+  var isAllDocuments;
+
+  if (this.id === "trainAll" || this.id === "trainThis") {
+    if (tagModel.currentDoc == null) {
+      alert("Please upload a document first!");
+      return
     }
-    // TODO: replace options
-    var options = {
-        args: ['--model_output_dir', modelPath, '--data_path', tagModel.exportAsString(), '--iterations', 30]
-    };
-    // try app
-    // TODO: replace with annotate all
-    let pyReturn;
-    // try installer path
-    launchPy(trainScript, options).then(function (data) {
-        pyReturn = data;
-        alert('!');
-        next();
-    }).catch(function () {
-        //try compiled path
-        launchPy(trainScriptLocal, options).then(function (data) {
-            pyReturn = data;
-            alert('!!!');
-            next();
-        }).catch(function () {
-            // still didn't work
-            if (!pyReturn) {
-                alert('Something went wrong');
-                return -1;
-            }
-        });
-    });
+    if (this.id === "trainAll") {
+      console.log("Annotating all documents...");
+      isAllDocuments = true;
+    }
+    else {
+      console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
+      isAllDocuments = false;
+    }
+  }
+
+  // TODO: replace options
+  var options = {
+      args: ['--raw_data', tagModel.jsonifyData(isAllDocuments), '--n_iter', 30, '--model', tagModel.currentModel]
+  };
+  // try app
+  // TODO: replace with annotate all
+  let pyReturn;
+  // try installer path
+  launchPy(trainScript, options).then(function (data) {
+      pyReturn = data;
+      alert('!');
+      next();
+  }).catch(function () {
+      //try compiled path
+      launchPy(trainScriptLocal, options).then(function (data) {
+          pyReturn = data;
+          alert('!!!');
+          next();
+      }).catch(function () {
+          // still didn't work
+          if (!pyReturn) {
+              alert('Something went wrong');
+              return -1;
+          }
+      });
+  });
 });
 
-$('#annotateBtn').on('click', function () {
-    if (!modelPath) {
-        alert("Please add a model path");
-        return;
-    }
-    // replace options
-    var options = {
-        args: ['--model_path', modelPath, '--data_path', tagModel.exportAsString()]
-    };
-    // try app
-    // TODO: replace with annotate all
-    let pyReturn;
-    launchPy(annotateScript, options).then(function (data) {
-        pyReturn = data;
-        alert('!');
-        next();
-    }).catch(function () {
-        //try compiled path
-        launchPy(annotateScriptLocal, options).then(function (data) {
-            pyReturn = data;
-            alert('!!!');
-            next();
-        }).catch(function () {
-            // still didn't work
-            if (!pyReturn) {
-                alert('Something went wrong');
-                return -1;
-            }
-        });
-    });
+$('.annButton').on('click', function () {
+  var isAllDocuments;
 
-    next = function () {
-        console.log(pyReturn);
-    };
+  if (!tagModel.currentModel) {
+    alert("Please add a model first!");
+    return;
+  }
+  if (tagModel.currentDoc == null) {
+    alert("Please upload a document first!");
+    return
+  }
+
+  if (this.id === "annAll") {
+    console.log("Annotating all documents...");
+    isAllDocuments = true;
+  }
+  else if (this.id === "annThis"){
+    console.log("Annotating document: \"" + tagModel.currentDoc.title + "\"");
+    isAllDocuments = false;
+  }
+
+  // replace options
+  var options = {
+      args: ['--model', tagModel.currentModel, '--raw_data', tagModel.jsonifyData(isAllDocuments)]
+  };
+  // try app
+  // TODO: replace with annotate all
+  let pyReturn;
+  launchPy(annotateScript, options).then(function (data) {
+      pyReturn = data;
+      alert('!');
+      next();
+  }).catch(function () {
+      //try compiled path
+      launchPy(annotateScriptLocal, options).then(function (data) {
+          pyReturn = data;
+          alert('!!!');
+          next();
+      }).catch(function () {
+          // still didn't work
+          if (!pyReturn) {
+              alert('Something went wrong');
+              return -1;
+          }
+      });
+  });
+
+  next = function () {
+      console.log(pyReturn);
+  };
 });
 
-// launches script // get messages and add to console // return on end
+// launches script
+// get messages and add to console
+// return on end
 launchPy = function (file, options = null) {
     return new Promise(function (resolve, reject) {
         $(document.body).css('cursor', 'wait');
-        console.log('Attempting to Lanuch "' + file + '"');
+        console.log('Attempting to Launch "' + file + '"');
         var pyshell = new PythonShell.PythonShell(file, options);
 
         var returned = [];      // returned values
@@ -134,7 +165,7 @@ launchPy = function (file, options = null) {
             toLog.push(message);
             returned.push(message);
 
-            // check for elasped time, then update console
+            // check for elapsed time, then update console
             if (Date.now() - timer > waitTime) {
                 do {
                     pushToConsole(toLog.shift(), 100);
@@ -162,15 +193,19 @@ launchPy = function (file, options = null) {
     });
 };
 
-// push to console // limit is number of lines to keep in console // 0 = unlimited
+// push to console
+// limit is number of lines to keep in console
+// 0 = unlimited
 pushToConsole = function (string, limit = 0) {
-    $('#console').append($('<li>').text(string));
-    $('#console').scrollTop($('#console').prop('scrollHeight'));
+    var console = $('#console');
+
+    console.append($('<li>').text(string));
+    console.scrollTop(console.prop('scrollHeight'));
 
     // over limit, remove excess lines
     if (limit > 0) {
-        while ($('#console').children().length - limit > 0) {
-            $('#console').find(':first-child').remove();
+        while (console.children().length - limit > 0) {
+            console.find(':first-child').remove();
         }
     }
 };
@@ -180,7 +215,8 @@ String.prototype.goodPath = function () {
     return this.replace(/\\/g, "/");
 };
 
-// truncate from front of string // truncate before word (searches for forward slash)
+// truncate from front of string
+// truncate before word (searches for forward slash)
 String.prototype.truncStart = function (n, truncBeforeWord = false) {
     if (this.length <= n) { return this; }
     let subString = this.substr(this.length - n, this.length);
