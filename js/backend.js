@@ -54,7 +54,7 @@ $('.trainButton').on('click', function () {
   if (this.id === "trainAll" || this.id === "trainThis") {
     if (tagModel.currentDoc == null) {
       alert("Please upload a document first!");
-      return
+      return;
     }
     if (this.id === "trainAll") {
       console.log("Annotating all documents...");
@@ -103,7 +103,7 @@ $('.annButton').on('click', function () {
   }
   if (tagModel.currentDoc == null) {
     alert("Please upload a document first!");
-    return
+    return;
   }
 
   if (this.id === "annAll") {
@@ -124,13 +124,15 @@ $('.annButton').on('click', function () {
   let pyReturn;
   launchPy(annotateScript, options).then(function (data) {
       pyReturn = data;
-      alert('!');
+      displayAnnotations();
+      alert('Successfully received ML annotations!');
       next();
   }).catch(function () {
       //try compiled path
       launchPy(annotateScriptLocal, options).then(function (data) {
           pyReturn = data;
-          alert('!!!');
+          displayAnnotations();
+          alert('Successfully received ML annotations (local script)!');
           next();
       }).catch(function () {
           // still didn't work
@@ -191,6 +193,17 @@ launchPy = function (file, options = null) {
             }
         });
     });
+};
+
+displayAnnotations = function() {
+  const fs = require('fs');
+  let rawContent = fs.readFileSync('data.json');
+  let jsonContent = JSON.parse(rawContent);
+  console.log("ML returned \n", jsonContent);
+  let errors = loadJsonData(jsonContent, "", obliterate = true);
+  if(errors.count > 0) {
+    console.log('error displaying ml data: ', errors);
+  }
 };
 
 // push to console
