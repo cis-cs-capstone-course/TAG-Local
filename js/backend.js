@@ -10,6 +10,8 @@ let trainScript = path.join(__dirname, 'py', 'train.py');
 let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
 let annotateScript = path.join(__dirname, 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
+let createScript = path.join(__dirname, 'py', 'create.py');
+let createScriptLocal = path.join(__dirname, 'py', 'create.py');
 
 // hide things supposed to be hidden
 $('#trainAll').hide();
@@ -34,6 +36,39 @@ function loadExistingML(){
         $('#modelPath').text(tagModel.currentModel.truncStart(30, true)).show();
       }
   });
+}
+
+
+
+function beginCreate(filePath){
+  var options = {
+      args: ['--model_path', filePath]
+  };
+  // try app
+  let pyReturn;
+  // try installer path
+  launchPy(createScript, options).then(function (data) {
+      pyReturn = data;
+      alert('Creation Complete!');
+      next();
+  }).catch(function () {
+      //try compiled path
+      launchPy(createScriptLocal, options).then(function (data) {
+          pyReturn = data;
+          alert('Creation Complete (local script)!');
+          next();
+      }).catch(function () {
+          // still didn't work
+          if (!pyReturn) {
+              alert('Something went wrong');
+              return -1;
+          }
+      });
+  });
+
+  next = function () {
+      console.log(pyReturn);
+  };
 }
 
 
@@ -169,22 +204,42 @@ function beginAnnotating(isAllDocuments){
   };
 }
 
+//TODO: Add button to create new model
 $('.createModel').on('click', function () {
+  //function created to create blank model below
+    createBlankML();
   // open file picker
   // store path (var chosenPath) as argument
   // invoke create.py(chosenPath)
 
-  // on success
-    // set tagModel.currentModel = chosenPath
-    // display hidden train buttons if not already shown
-    // collect $200
   // on fail
     // prompt with error
 });
 
+
+function createBlankML(){
+  console.log("Opening save dialog");
+  dialog.showSaveDialog(remote.getCurrentWindow(), {
+      title: "Select a folder",
+      properties: ["openDirectory"]
+  }).then(function (data){
+      if (data.filePath === undefined){
+          console.log("You didn't select a path");
+          return;
+      }
+      if (data.canceled == true) {
+          console.log("You canceled the model creation");
+          return;
+        }
+      beginCreate(data.filePath);
+  });
+}
+
+
 // launches script
 // get messages and add to console
 // return on end
+
 launchPy = function (file, options = null) {
     return new Promise(function (resolve, reject) {
         $(document.body).css('cursor', 'wait');

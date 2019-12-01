@@ -75,7 +75,8 @@ const template = [
   {
     label: 'Machine Learning',
     submenu: [
-      { label: 'Create Blank Model'},
+      { label: 'Create Blank Model',
+        click: createBlankML  },
       { label: 'Load Existing Model',
         click: loadExistingML },
       { type: 'separator'},
