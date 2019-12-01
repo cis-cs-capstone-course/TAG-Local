@@ -189,9 +189,12 @@ img, #logoContainer {
   transition: background-color 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease;
 }
 
-.bButton:hover {
+.bButton:hover, .annButton:hover, .dlButton:not(#trainName):hover, .trainButton:hover {
   background-color: white !important;
   color: black !important;
+}
+
+#annotateBtn {
   cursor: pointer;
 }
 
@@ -210,7 +213,7 @@ img, #logoContainer {
   flex-direction: column;
 }
 
-.dlButton {
+.dlButton, .annButton, .trainButton {
   height: 5vh;
   border: 0;
   font-weight: bold;
@@ -222,10 +225,9 @@ img, #logoContainer {
   transition: background-color 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease;
 }
 
-.dlButton:hover {
-  background-color: white !important;
-  color: black !important;
-  cursor: pointer;
+#modelPath {
+  background-color: #5E42A6;
+  color: white;
 }
 
 #centerContainer {
@@ -268,7 +270,6 @@ img, #logoContainer {
 }
 
 #rightContainer:hover {
-  box-shadow: 0 0 10px white;
   overflow: overlay;
 }
 

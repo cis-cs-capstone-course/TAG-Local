@@ -13,10 +13,12 @@ const isMac = process.platform === 'darwin';
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
+    icon: './tag.ico',
     width: 1280,
     height: 720,
     frame: true,
-    // titleBarStyle: 'hidden',
+    minWidth: 960,
+    minHeight: 540,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true
