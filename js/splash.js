@@ -4,7 +4,7 @@ var startup = true;
 // hide splash after 
 setTimeout(function () {
     // hide and set up for clicking show splash
-    $('#splash').slideUp(400, function() {
+    $('#splash').slideUp(400, function () {
         startup = false;
         $(this).css('cursor', 'pointer');
     });
@@ -16,5 +16,13 @@ $('#splash').on('click', function () {
     // not startup, hide
     if (!startup) {
         $(this).slideUp(400);
+    }
+});
+
+$(document).keydown(function (e) {
+    if (!startup) {
+        if (e.which === 27) {
+            $('#splash').slideUp(400);
+        }
     }
 });

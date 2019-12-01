@@ -28,62 +28,15 @@ $(document).on("mousedown", function (e) {
   }
 });
 
-// download Zip
+// download zip
 $('#dlZip').on('click', function () {
   exportZip();
 });
 
+// download json
 $('#dlJson').on('click', function () {
   exportAllJson();
 });
-
-
-function exportZip(){
-  console.log("Zip export requested...");
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to export!');
-    return;
-  }
-  let zip = tagModel.getAsZip();
-  dialog.showSaveDialog(remote.getCurrentWindow())
-  .then(result => {
-    let savePath = result.filePath;
-    if (path.extname(savePath) != '.zip') {
-      savePath += '.zip';
-    }
-    zip
-    .generateNodeStream({type:'nodebuffer',streamFiles:true})
-    .pipe(fs.createWriteStream(savePath))
-    .on('finish', function () {
-        console.log("Created zip file: ", savePath);
-    });
-  });
-}
-
-function exportAllJson(){
-  console.log("JSON download requested...");
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to download!');
-    return;
-  }
-
-  dialog.showSaveDialog(remote.getCurrentWindow())
-  .then((result) => {
-    let savePath = result.filePath;
-    if(path.extname(savePath) != '.json') {
-      savePath += '.json';
-    }
-    fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
-        if(err){
-            alert("An error ocurred creating the file "+ err.message);
-          }
-        alert("Succesfully saved: ", savePath);
-        console.log("Saved file: ", savePath);
-    });
-  });
-}
 
 //TODO : EVENTUALLY replace uploadDocFromFile with getDocInput (below)
 // function uploadDocFromFile(file) {
@@ -172,60 +125,87 @@ function exportAllJson(){
 // check a or d button pressed
 var aKeyPressed = false;
 var dKeyPressed = false;
+// key pressed
 $(window).keydown(function (e) {
   if (e.which === 65) {
     aKeyPressed = true;
   } else if (e.which === 68) {
     dKeyPressed = true;
   }
-}).keyup(function (e) {
-  if (e.which === 65) {
-    aKeyPressed = false;
-  } else if (e.which === 68) {
-    dKeyPressed = false;
-  }
-});
+})
+  // key released
+  .keyup(function (e) {
+    if (e.which === 65) {
+      aKeyPressed = false;
+    } else if (e.which === 68) {
+      dKeyPressed = false;
+    }
+  });
 
 // on mouse release, highlight selected text
 textArea.on('mouseup', function (e) {
+  // left click release
   if (e.which === 1) {
+    // check for label
+    if (tagModel.currentCategory === null) {
+      alert('Error: Please create a label!');
+      return;
+    }
+    // check for document
+    if (tagModel.currentDoc === null) {
+      alert('Error: Please add a document!');
+      return;
+    }
+
+    // there is a label and document
+    // get text selected
+    let range = {};
     if (textArea[0].selectionStart < textArea[0].selectionEnd) {
-      if (tagModel.currentCategory === null) {
-        alert('Error: Please create a label!');
-        return;
-      }
-      if (tagModel.currentDoc === null) {
-        alert('Error: Please add a document!');
-        return;
-      }
-      let range = {
+      // selected text
+      range = {
         startPosition: textArea[0].selectionStart,
         endPosition: textArea[0].selectionEnd
       };
 
-      let belongs = tagModel.currentDoc.getIndicesByRange(range, tagModel.currentCategory);
+      // check for existing
+      var hasExistingAnnotation = tagModel.currentDoc.getIndicesByRange(range, tagModel.currentCategory).length > 0;
 
+      // a key
       if (aKeyPressed) {
         mostRecentIndex = tagModel.addAnnotation(range, tagModel.currentCategory);
         renderHighlights();
         clearSelection();
-      } else if (dKeyPressed) {
-        if (belongs.length > 0) {
+      }
+      // d key
+      else if (dKeyPressed) {
+        if (hasExistingAnnotation) {
           tagModel.removeAnnotationByRange(range);
           mostRecentIndex = -1;
           renderHighlights();
           clearSelection();
         }
-      } else {
-        delete_menu.css({
-          top: e.pageY,
-          left: e.pageX,
-          'min-width': ''
-        });
-        delete_menu.append('<h6>Which?</h6><hr style="margin: 0;">')
-          .append('<li class="add-anno" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #b7e8c7; font-weight: bold;">Add</li>')
-          .append('<li class="delete-anno-part" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #ef778c; font-weight: bold;">Delete</li>')
-          .show(100);
+      }
+      // default behaviour
+      else {
+        // annotation exists at these positions
+        // show menu and prompt what to do next
+        if (hasExistingAnnotation) {
+          delete_menu.css({
+            top: e.pageY + 'px',
+            left: e.pageX + 'px'
+          });
+          delete_menu.append('<h6>Which?</h6><hr style="margin: 0;">');
+          delete_menu.append('<li class="add-anno" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #b7e8c7; font-weight: bold;">Add</li>');
+          delete_menu.append('<li class="delete-anno-part" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #ef778c; font-weight: bold;">Delete</li>');
+          delete_menu.show(100);
+        }
+        // annotation exists at these positions
+        // add annotation
+        else {
+          mostRecentIndex = tagModel.addAnnotation(range, tagModel.currentCategory);
+          renderHighlights();
+          clearSelection();
+        }
       }
     }
   }
@@ -233,39 +213,46 @@ textArea.on('mouseup', function (e) {
 
 // on right click, show annotations at position to delete
 textArea.on('contextmenu', function (e) {
+  // check for document
   if (tagModel.currentDoc === null) {
     return;
   }
+  // check if annotations exist
   let position = textArea[0].selectionStart;
   deleteList = tagModel.currentDoc.getAnnotationsAtPos(position);
+  // annotations don't exist
+  // do nothing
+  if (deleteList.length === 0) {
+    return;
+  }
 
-  if (deleteList.length > 0) {
+  // annotations exist
+  // show delete menu
+  delete_menu.append(
+    $('<h6/>', {
+      html: 'Delete Annotation:'
+    })
+  ).append(
+    $('<hr/>', {
+      style: 'margin: 0;'
+    })
+  );
+  for (let i = 0; i < deleteList.length; i++) {
     delete_menu.append(
-      $('<h6/>', {
-        html: 'Delete Annotation:'
-      })
-    ).append(
-      $('<hr/>', {
-        style: 'margin: 0;'
-      })
-    );
-    for (let i = 0; i < deleteList.length; i++) {
-      delete_menu.append(
-        $('<li/>', {
-          class: 'delete-anno',
-          value: 'delete_anno_' + i,
-          style: 'background-color:' + tagModel.getColor(deleteList[i].label),
-          html: '<b>' + deleteList[i].label.trunc(10) + ': </b>'
-        }).append(
-          deleteList[i].content.trunc(20).escapeHtml()
-        )
-      ).show(100).
-        css({
-          top: e.pageY + 'px',
-          left: e.pageX + 'px',
-          'min-width': ''
-        });
-    }
+      $('<li/>', {
+        class: 'delete-anno',
+        value: 'delete_anno_' + i,
+        style: 'background-color:' + tagModel.getColor(deleteList[i].label),
+        html: '<b>' + deleteList[i].label.trunc(10) + ': </b>'
+      }).append(
+        deleteList[i].content.trunc(20).escapeHtml()
+      )
+    ).show(100).
+      css({
+        top: e.pageY + 'px',
+        left: e.pageX + 'px',
+        'min-width': ''
+      });
   }
 });
 
@@ -381,38 +368,15 @@ $('#add-document').on('click', function () {
   getDocInput();
 });
 
-function getDocInput(){
-  dialog.showOpenDialog(remote.getCurrentWindow(), {
-    title: "Select a folder",
-    properties: ['openFile', 'multiSelections'],
-    filters: [{name: 'Docs', extensions: ['txt', 'json'] } ]
-  }).then(function (data) {
-      let invalidFiles = "";
-      data.filePaths.forEach((file) => {
-        let name = path.basename(file);
-        let extension = path.extname(file);
-        let content = fs.readFileSync(file, 'utf8');
-        if (extension == '.json') {
-          loadJsonData(JSON.parse(content));
-        } else {
-          let doc = new Doc(name, content);
-          if (!addDoc(doc)) {
-            invalidFiles += "Already added " + doc.title + "\n";
-            console.log("Already added ", doc.title);
-          }
-        }
-      });
-      if (invalidFiles != "") {
-        alert(invalidFiles);
-      }
-  });
-}
 // change document
 doc_list.on('mouseup', '.doc-name', function (e) {
+  // get document selected
   tagModel.setCurrentDoc(this.getAttribute('value'));
   $('#doc-selected').attr('id', '');
   $(this).attr('id', 'doc-selected');
+  // change text
   textArea.text(tagModel.currentDoc.text.escapeHtml());
+
   mostRecentIndex = -1;
   renderHighlights();
   resize();
@@ -451,6 +415,7 @@ delete_menu.on('click', 'li', function () {
   delete_menu.hide(100);
   // add annotation
   if ($(this).hasClass('add-anno')) {
+    // parse values to delete
     let value = $(this).attr('value').split(' ');
     var range = {
       startPosition: parseInt(value[0]),
@@ -479,9 +444,11 @@ delete_menu.on('click', 'li', function () {
   }
   // delete label
   else if ($(this).hasClass('delete-label')) {
+    //remove category
     tagModel.deleteCategory();
     console.log('Category Deleted');
     resize();
+    // change label selected visually
     $('#label-selected').remove();
     if (tagModel.currentDoc != null) {
       $('.label[value="' + tagModel.currentCategory + '"]').attr('id', 'label-selected');
@@ -490,20 +457,25 @@ delete_menu.on('click', 'li', function () {
   }
   // delete document
   else if ($(this).hasClass('delete-doc')) {
+    // remove document
     tagModel.deleteDoc(tagModel.currentDoc.title);
     console.log('Document Deleted');
+    // update text
     if (tagModel.currentDoc != null) {
       textArea.text(tagModel.currentDoc.text.escapeHtml());
     } else {
       textArea.text('');
     }
     resize();
+    // change doc selected visually
     $('#doc-selected').remove();
     if (tagModel.currentDoc != null) {
       $('.doc-name[value="' + tagModel.currentDoc.title + '"]').attr('id', 'doc-selected');
     }
     mostRecentIndex = -1;
-  } else if ($(this).hasClass('delete-anno-list')) {
+  }
+  // delete annotation by list
+  else if ($(this).hasClass('delete-anno-list')) {
     let value = $(this).attr('value');
     tagModel.removeAnnotationByIndex(value);
     mostRecentIndex = -1;
@@ -521,12 +493,93 @@ $(window).on('resize', function () {
 
 // ----- functions ----- //
 
+// export zip function
+function exportZip() {
+  console.log("Zip export requested...");
+  // no files found
+  if (tagModel.openDocs.length === 0) {
+    alert('Error: No data to export!');
+    return;
+  }
+  let zip = tagModel.getAsZip();
+  dialog.showSaveDialog(remote.getCurrentWindow())
+    .then(result => {
+      let savePath = result.filePath;
+      if (path.extname(savePath) != '.zip') {
+        savePath += '.zip';
+      }
+      zip
+        .generateNodeStream({ type: 'nodebuffer', streamFiles: true })
+        .pipe(fs.createWriteStream(savePath))
+        .on('finish', function () {
+          console.log("Created zip file: ", savePath);
+        });
+    });
+}
+
+// export json function
+function exportAllJson() {
+  console.log("JSON download requested...");
+  // no files found
+  if (tagModel.openDocs.length === 0) {
+    alert('Error: No data to download!');
+    return;
+  }
+
+  dialog.showSaveDialog(remote.getCurrentWindow())
+    .then((result) => {
+      let savePath = result.filePath;
+      if (path.extname(savePath) != '.json') {
+        savePath += '.json';
+      }
+      fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
+        if (err) {
+          alert("An error ocurred creating the file " + err.message);
+        }
+        alert("Succesfully saved: ", savePath);
+        console.log("Saved file: ", savePath);
+      });
+    });
+}
+
+// add document
+function getDocInput() {
+  dialog.showOpenDialog(remote.getCurrentWindow(), {
+    title: "Select a folder",
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: 'Docs', extensions: ['txt', 'json'] }]
+  }).then(function (data) {
+    let invalidFiles = "";
+    data.filePaths.forEach((file) => {
+      let name = path.basename(file);
+      let extension = path.extname(file);
+      let content = fs.readFileSync(file, 'utf8');
+      if (extension == '.json') {
+        loadJsonData(JSON.parse(content));
+      } else {
+        let doc = new Doc(name, content.replace(/\n/g, ' '));
+        if (!addDoc(doc)) {
+          invalidFiles += "Already added " + doc.title + "\n";
+          console.log("Already added ", doc.title);
+        }
+      }
+    });
+    if (invalidFiles != "") {
+      alert(invalidFiles);
+    }
+  });
+}
+
 //add new document
 function addDoc(doc) {
-  tagModel.addDoc(doc);
+  // try to add document
+  if (!tagModel.addDoc(doc)) {
+    return false;
+  }
+  // added document
+  // set current document to new document
   tagModel.setCurrentDoc(doc.title.escapeHtml());
   textArea.text(tagModel.currentDoc.text.escapeHtml());
-  resize();
   $('#doc-selected').attr('id', '');
   doc_list.append(
     $('<h6/>', {
@@ -536,60 +589,68 @@ function addDoc(doc) {
       html: doc.title.escapeHtml()
     })
   );
+  doc_list.scrollTop(doc_list.prop('scrollHeight'));
+
+  resize();
   mostRecentIndex = -1;
   renderHighlights();
-  doc_list.scrollTop(doc_list.prop('scrollHeight'));
+  return true;
 }
 
 //add new label
 function addLabel(name, color = null) {
-  if (tagModel.categoryIndex(name) === -1) {
-    if (color === null) {
-      color = makeRandColor();
-    }
-    tagModel.addCategory(name, color);
-
-    // add highlight rule to page
-    $('head').append(
-      $('<style/>', {
-        id: name + '-style',
-        class: 'highlight-style',
-        html: '.hwt-content .label_' + name + ' {background-color: ' + color + ';}'
-      })
-    );
-
-    // select new category
-    tagModel.currentCategory = name;
-    $('#label-selected').attr('id', '');
-
-    // add category to page
-    var newLabel = $('<div/>', {
-      class: 'hoverWhite label',
-      id: 'label-selected',
-      value: name,
-      style: "background-color: " + color
-    }).append(
-      $('<img/>', {
-        class: 'colorChange',
-        src: 'images/dropper.png',
-      })
-    ).append(
-      $('<div/>', {
-        class: 'label-name'
-      }).text(name)
-    );
-
-    label_list.append(newLabel);
-
-    // go to new label's postion
-    label_list.scrollTop(label_list.prop('scrollHeight'));
-
-    // first color => make current category the color
-    tagModel.currentCategory = name;
-    $('.label[value=' + name + ']').attr('id', 'label-selected');
-  } else {
-    console.log('Failed to add label "' + name + '": label already exists!');
+  // check if name already belongs
+  if (tagModel.categoryIndex(name) !== -1) {
+    alert('Failed to add label "' + name + '": label already exists!');
+    return null;
   }
+
+  // does not already belong
+  // check for specific color
+  if (color === null) {
+    color = makeRandColor();
+  }
+  tagModel.addCategory(name, color);
+
+  // add highlight rule to page
+  $('head').append(
+    $('<style/>', {
+      id: name + '-style',
+      class: 'highlight-style',
+      html: '.hwt-content .label_' + name + ' {background-color: ' + color + ';}'
+    })
+  );
+
+  // select new category
+  tagModel.currentCategory = name;
+  $('#label-selected').attr('id', '');
+
+  // add category to page
+  var newLabel = $('<div/>', {
+    class: 'hoverWhite label',
+    id: 'label-selected',
+    value: name,
+    style: "background-color: " + color
+  }).append(
+    $('<img/>', {
+      class: 'colorChange',
+      src: 'images/dropper.png',
+    })
+  ).append(
+    $('<div/>', {
+      class: 'label-name'
+    }).text(name)
+  );
+
+  label_list.append(newLabel);
+
+  // go to new label's postion
+  label_list.scrollTop(label_list.prop('scrollHeight'));
+
+  // first color => make current category the color
+  tagModel.currentCategory = name;
+  $('.label[value=' + name + ']').attr('id', 'label-selected');
+
   return newLabel;
 }
 
@@ -618,7 +679,7 @@ function loadJsonData(data, filename = "", obliterate = false) {
   if (obliterate) {
     console.log('Displaying new data');
 
-    $.each(data, function() {
+    $.each(data, function () {
       tagModel.deleteDoc(this.title);
       $('.doc-name[value="' + this.title + '"]').remove();
     });
@@ -656,7 +717,7 @@ function loadJsonData(data, filename = "", obliterate = false) {
       return;
     }
     // create and add doc
-    var newDoc = new Doc(doc.title, doc.text);
+    var newDoc = new Doc(doc.title, doc.text.replace(/\n/g, ' '));
     addDoc(newDoc);
     tagModel.currentDoc = newDoc;
     doc.annotations.forEach(function (annotation) {
@@ -773,11 +834,13 @@ function renderHighlights() {
   }
 }
 
+// clears selected text
 function clearSelection() {
   var selection = window.getSelection ? window.getSelection() : document.selection ? document.selection : null;
   if (selection) selection.empty ? selection.empty() : selection.removeAllRanges();
 }
 
+// scroll to position of annotation
 function jumpToAnno(num) {
   $(window).scrollTop($('.highlight[value="' + num + '"]').offset().top);
 }
@@ -787,7 +850,9 @@ String.prototype.escapeHtml = function () {
   return this.replace(/<|>/g, "_");
 };
 
-// truncate string and add ellipsis // truncAfterWord will only truncate on spaces // returns entire word if string contains no spaces
+// truncate string and add ellipsis 
+// truncAfterWord will only truncate on spaces 
+// returns entire word, up to n characters, if string contains no spaces
 String.prototype.trunc = function (n, truncAfterWord = false) {
   if (this.length <= n) { return this; }
   let subString = this.substr(0, n - 1);
