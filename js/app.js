@@ -12,6 +12,10 @@ var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
 var mostRecentIndex = -1;
+var path = require('path');
+const { dialog } = require('electron').remote;
+
+
 // --------------events-------------- //
 
 // clicked anywhere
@@ -26,122 +30,144 @@ $(document).on("mousedown", function (e) {
 
 // download Zip
 $('#dlZip').on('click', function () {
-  console.log("Zip download requested...");
+  exportZip();
+});
+
+$('#dlJson').on('click', function () {
+  exportAllJson();
+});
+
+
+function exportZip(){
+  console.log("Zip export requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to download!');
+    alert('Error: No data to export!');
     return;
   }
   let zip = tagModel.getAsZip();
-  zip.generateAsync({ type: "blob" }).then(function (content) {
-    saveAs(content, "annotations.zip");
+  dialog.showSaveDialog(remote.getCurrentWindow())
+  .then(result => {
+    let savePath = result.filePath;
+    if (path.extname(savePath) != '.zip') {
+      savePath += '.zip';
+    }
+    zip
+    .generateNodeStream({type:'nodebuffer',streamFiles:true})
+    .pipe(fs.createWriteStream(savePath))
+    .on('finish', function () {
+        console.log("Created zip file: ", savePath);
+    });
   });
-});
+}
 
-// download Json
-$('#dlJson').on('click', function () {
+function exportAllJson(){
   console.log("JSON download requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
     alert('Error: No data to download!');
     return;
   }
-  var blob = new Blob([tagModel.jsonifyData(false)], { type: 'application/JSON' });
-  saveAs(blob, tagModel.currentDoc.title + ".json");
-});
 
-// add document
-$("#fileInputControl").on("change", function () {
-  console.log("Found " + this.files.length + " files");
-  // add each file to documents
-  [].forEach.call(this.files, function (file) {
-    uploadDocFromFile(file);
-  });
-  this.value = "";
-});
-
-function uploadDocFromFile(file) {
-  // clean up name of string and check if already belongs
-  let fileName = file.name.replace(/\s+/g, "_").replace(/[^A-Za-z0-9\.\-\_]/g, '');
-  if (tagModel.docIndex(fileName) !== -1) {
-    alert("File already uploaded for: '" + fileName + "'\n");
-  }
-  // txt
-  if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
-    console.log("Found txt file: '" + fileName + "'");
-    // read, create, and add file
-    let fileReader = new FileReader(file);
-    fileReader.onload = function () {
-      let newDoc = new Doc(fileName, fileReader.result.replace(/[\r\t\f\v\ ]+/g, " "));
-      addDoc(newDoc);
-    };
-    fileReader.readAsText(file);
-  }
-  // json
-  else if (fileName.match(/.*\.json$/g) !== null) {
-    console.log("Found json file: '" + fileName + "'");
-    // read, create, and add file
-    let fileReader = new FileReader(file);
-    fileReader.onload = function () {
-      let newJson = fileReader.result.replace(/[\r\t\f\v\ ]+/g, " ");
-      let errors = loadJsonData(JSON.parse(newJson));
-      if (errors.length > 0) {
-        alert(errors);
-      }
-    };
-    fileReader.readAsText(file);
-  }
-  // zip
-  else if (fileName.match(/.*\.zip$/g) !== null) {
-    console.log("Found zip file: '" + fileName + "'");
-    uploadDocsFromZipFile(file);
-  }
-  // wasn't one of the file types
-  else {
-    alert("File type not supported for: '" + fileName + "'");
-  }
-  // name matches one of the files already uploaded
-}
-
-function uploadDocsFromZipFile(file) {
-  // load zip file
-  JSZip.loadAsync(file).then(function (zip) {
-    // do each file within zip
-    [].forEach.call(Object.keys(zip.files), function (fileName) {
-      if (tagModel.docIndex(fileName) !== -1) {
-        alert("File already uploaded for: '" + fileName + "' in zip");
-        return;
-      }
-      // mac compressed?
-      if (fileName.match(/^__MACOSX/g) !== null) {
-        alert("Ignored __MACOSX compression file: '" + fileName + "'");
-        return;
-      }
-      // find file format then add
-      zip.files[fileName].async('string').then(function (fileContents) {
-        // zip
-        if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
-          console.log("Found txt file: '" + fileName + "' in zip");
-          let newDoc = new Doc(fileName, fileContents.replace(/[\r\t\f\v\ ]+/g, " "));
-          addDoc(newDoc);
-        }
-        // json
-        else if (fileName.match(/.*\.json$/g) !== null) {
-          console.log("Found json file: '" + fileName + "' in zip");
-          let newJson = fileContents.replace(/[\r\t\f\v\ ]+/g, " ");
-          let errors = loadJsonData(JSON.parse(newJson));
-          if (errors.length > 0) {
-            alert(errors);
+  dialog.showSaveDialog(remote.getCurrentWindow())
+  .then((result) => {
+    let savePath = result.filePath;
+    if(path.extname(savePath) != '.json') {
+      savePath += '.json';
+    }
+    fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
+        if(err){
+            alert("An error ocurred creating the file "+ err.message);
           }
-        }
-        // wasn't one of the file types
-        else {
-          alert("File type not supported for: '" + fileName + "'\n");
-        }
-      });
+        alert("Succesfully saved: ", savePath);
+        console.log("Saved file: ", savePath);
     });
   });
 }
+
+//TODO : EVENTUALLY replace uploadDocFromFile with getDocInput (below)
+// function uploadDocFromFile(file) {
+//   // clean up name of string and check if already belongs
+//   let fileName = file.name.replace(/\s+/g, "_").replace(/[^A-Za-z0-9\.\-\_]/g, '');
+//   if (tagModel.docIndex(fileName) !== -1) {
+//     alert("File already uploaded for: '" + fileName + "'\n");
+//   }
+//   // txt
+//   if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
+//     console.log("Found txt file: '" + fileName + "'");
+//     // read, create, and add file
+//     let fileReader = new FileReader(file);
+//     fileReader.onload = function () {
+//       let newDoc = new Doc(fileName, fileReader.result.replace(/[\r\t\f\v\ ]+/g, " "));
+//       addDoc(newDoc);
+//     };
+//     fileReader.readAsText(file);
+//   }
+//   // json
+//   else if (fileName.match(/.*\.json$/g) !== null) {
+//     console.log("Found json file: '" + fileName + "'");
+//     // read, create, and add file
+//     let fileReader = new FileReader(file);
+//     fileReader.onload = function () {
+//       let newJson = fileReader.result.replace(/[\r\t\f\v\ ]+/g, " ");
+//       let errors = loadJsonData(JSON.parse(newJson));
+//       if (errors.length > 0) {
+//         alert(errors);
+//       }
+//     };
+//     fileReader.readAsText(file);
+//   }
+//   // zip
+//   else if (fileName.match(/.*\.zip$/g) !== null) {
+//     console.log("Found zip file: '" + fileName + "'");
+//     uploadDocsFromZipFile(file);
+//   }
+//   // wasn't one of the file types
+//   else {
+//     alert("File type not supported for: '" + fileName + "'");
+//   }
+//   // name matches one of the files already uploaded
+// }
+
+// function uploadDocsFromZipFile(file) {
+//   // load zip file
+//   JSZip.loadAsync(file).then(function (zip) {
+//     // do each file within zip
+//     [].forEach.call(Object.keys(zip.files), function (fileName) {
+//       if (tagModel.docIndex(fileName) !== -1) {
+//         alert("File already uploaded for: '" + fileName + "' in zip");
+//         return;
+//       }
+//       // mac compressed?
+//       if (fileName.match(/^__MACOSX/g) !== null) {
+//         alert("Ignored __MACOSX compression file: '" + fileName + "'");
+//         return;
+//       }
+//       // find file format then add
+//       zip.files[fileName].async('string').then(function (fileContents) {
+//         // zip
+//         if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
+//           console.log("Found txt file: '" + fileName + "' in zip");
+//           let newDoc = new Doc(fileName, fileContents.replace(/[\r\t\f\v\ ]+/g, " "));
+//           addDoc(newDoc);
+//         }
+//         // json
+//         else if (fileName.match(/.*\.json$/g) !== null) {
+//           console.log("Found json file: '" + fileName + "' in zip");
+//           let newJson = fileContents.replace(/[\r\t\f\v\ ]+/g, " ");
+//           let errors = loadJsonData(JSON.parse(newJson));
+//           if (errors.length > 0) {
+//             alert(errors);
+//           }
+//         }
+//         // wasn't one of the file types
+//         else {
+//           alert("File type not supported for: '" + fileName + "'\n");
+//         }
+//       });
+//     });
+//   });
+// }
 
 // check a or d button pressed
 var aKeyPressed = false;
@@ -352,10 +378,35 @@ $('#colorChangePicker').on('change', function () {
 
 // add document button
 $('#add-document').on('click', function () {
-  // todo add name checking // no spaces
-  $('#fileInputControl').click();
+  getDocInput();
 });
 
+function getDocInput(){
+  dialog.showOpenDialog(remote.getCurrentWindow(), {
+    title: "Select a folder",
+    properties: ['openFile', 'multiSelections'],
+    filters: [{name: 'Docs', extensions: ['txt', 'json'] } ]
+  }).then(function (data) {
+      let invalidFiles = "";
+      data.filePaths.forEach((file) => {
+        let name = path.basename(file);
+        let extension = path.extname(file);
+        let content = fs.readFileSync(file, 'utf8');
+        if (extension == '.json') {
+          loadJsonData(JSON.parse(content));
+        } else {
+          let doc = new Doc(name, content);
+          if (!addDoc(doc)) {
+            invalidFiles += "Already added " + doc.title + "\n";
+            console.log("Already added ", doc.title);
+          }
+        }
+      });
+      if (invalidFiles != "") {
+        alert(invalidFiles);
+      }
+  });
+}
 // change document
 doc_list.on('mouseup', '.doc-name', function (e) {
   tagModel.setCurrentDoc(this.getAttribute('value'));
@@ -563,7 +614,7 @@ function makeRandColor() {
 }
 
 // import json data
-function loadJsonData(data, filename = "", obliterate = false, ) {
+function loadJsonData(data, filename = "", obliterate = false) {
   if (obliterate) {
     console.log('Displaying new data');
 
@@ -659,7 +710,7 @@ function renderHighlights() {
     if (category.length === 0) {
       continue;
     }
-    
+
     var annoHeader = $('<h2/>', {
       html: category[0][0].label + '<img class="dropArrow upsideDown" src="images/arrowDownWhite.png">',
       class: 'annoHeader hoverWhite',

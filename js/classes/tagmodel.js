@@ -7,12 +7,18 @@ class TagModel {
     this.currentCategory = null;
     this.categories = [];
     this.currentModel = "";
+    this.projectPath = null;
   }
 
   // ----- documents ----- //
   addDoc(doc) {
     console.log("Adding document: '" + doc.title + "'");
+    if (this.docIndex(doc.title) !== -1) {
+      console.log("File already uploaded for: '" + doc.title + "'\n");
+      return false;
+    }
     this.openDocs.push(doc);
+    return true;
   }
 
   setCurrentDoc(name) {
@@ -142,7 +148,7 @@ class TagModel {
   getAsZip(){
     var zip = new JSZip();
     this.openDocs.forEach(function(doc){
-      let title = doc.title +".json";
+      let title = doc.title + ".json";
       zip.file(title, JSON.stringify(doc));
       console.log("Added " + title + " to zip");
     });
