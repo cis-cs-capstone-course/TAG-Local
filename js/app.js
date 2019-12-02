@@ -547,25 +547,67 @@ function getDocInput() {
   dialog.showOpenDialog(remote.getCurrentWindow(), {
     title: "Select a folder",
     properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'Docs', extensions: ['txt', 'json'] }]
+    filters: [{ name: 'Docs', extensions: ['txt', 'json', 'zip'] }]
   }).then(function (data) {
-    let invalidFiles = "";
-    data.filePaths.forEach((file) => {
-      let name = path.basename(file);
-      let extension = path.extname(file);
-      let content = fs.readFileSync(file, 'utf8');
-      if (extension == '.json') {
-        loadJsonData(JSON.parse(content));
-      } else {
-        let doc = new Doc(name, content.replace(/\n/g, ' '));
-        if (!addDoc(doc)) {
-          invalidFiles += "Already added " + doc.title + "\n";
-          console.log("Already added ", doc.title);
-        }
+    loadFiles(data.filePaths);
+  });
+}
+
+
+function loadFiles(filePaths) {
+  console.log("LoadFiles called with : ", filePaths);
+  let invalidFiles = "";
+  filePaths.forEach((file) => {
+    let name = path.basename(file);
+    let extension = path.extname(file);
+    let content = fs.readFileSync(file, 'utf8');
+    if (extension == '.zip') {
+      console.log("Found a zip file");
+      extractZipFiles(file);
+    } else if (extension == '.json') {
+      console.log(content);
+      loadJsonData(JSON.parse(content));
+    } else if (extension == '.txt') {
+      if(!loadTextData(name, content)){
+        invalidFiles += "Already added " + name + "\n";
       }
-    });
-    if (invalidFiles != "") {
-      alert(invalidFiles);
+    }
+  });
+  if (invalidFiles != "") {
+    alert(invalidFiles);
+  }
+}
+
+
+function loadTextData(name, content){
+  let doc = new Doc(name, content.replace(/\n/g, ' '));
+  if (!addDoc(doc)) {
+    console.log("Already added ", doc.title);
+    return false;
+  }
+  return true;
+}
+
+//TODO: add tempdir to store unzipped files, then delete temp_dir after loading
+function extractZipFiles(file){
+  let unzippedFiles = [];
+  fs.readFile(file, function(err, data) {
+    if (!err) {
+      var zip = new JSZip();
+      zip.loadAsync(data).then(function(contents) {
+        let zippedFiles = Object.keys(contents.files);
+        zippedFiles.forEach(function(filename) {
+          zip.file(filename).async('nodebuffer').then(function(content) {
+            var dest = filename;
+            fs.writeFileSync(dest, content);
+            unzippedFiles.push(dest);
+            if(unzippedFiles.length == zippedFiles.length) {
+              console.log("All files unzipped");
+              loadFiles(unzippedFiles);
+            }
+          });
+        });
+      });
     }
   });
 }
@@ -850,8 +892,8 @@ String.prototype.escapeHtml = function () {
   return this.replace(/<|>/g, "_");
 };
 
-// truncate string and add ellipsis 
-// truncAfterWord will only truncate on spaces 
+// truncate string and add ellipsis
+// truncAfterWord will only truncate on spaces
 // returns entire word, up to n characters, if string contains no spaces
 String.prototype.trunc = function (n, truncAfterWord = false) {
   if (this.length <= n) { return this; }
