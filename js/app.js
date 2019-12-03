@@ -167,7 +167,7 @@ textArea.on('mouseup', function (e) {
         endPosition: textArea[0].selectionEnd
       };
 
-      // check for existing
+
       var hasExistingAnnotation = tagModel.currentDoc.getIndicesByRange(range, tagModel.currentCategory).length > 0;
 
       // a key
@@ -176,7 +176,6 @@ textArea.on('mouseup', function (e) {
         renderHighlights();
         clearSelection();
       }
-      // d key
       else if (dKeyPressed) {
         if (hasExistingAnnotation) {
           tagModel.removeAnnotationByRange(range);
@@ -184,23 +183,18 @@ textArea.on('mouseup', function (e) {
           renderHighlights();
           clearSelection();
         }
-      }
-      // default behaviour
-      else {
-        // annotation exists at these positions
-        // show menu and prompt what to do next
+      } else {
         if (hasExistingAnnotation) {
           delete_menu.css({
-            top: e.pageY + 'px',
-            left: e.pageX + 'px'
-          });
-          delete_menu.append('<h6>Which?</h6><hr style="margin: 0;">');
-          delete_menu.append('<li class="add-anno" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #b7e8c7; font-weight: bold;">Add</li>');
-          delete_menu.append('<li class="delete-anno-part" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #ef778c; font-weight: bold;">Delete</li>');
-          delete_menu.show(100);
+          top: e.pageY,
+          left: e.pageX,
+          'min-width': ''
+        });
+        delete_menu.append('<h6>Which?</h6><hr style="margin: 0;">')
+          .append('<li class="add-anno" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #b7e8c7; font-weight: bold;">Add</li>')
+          .append('<li class="delete-anno-part" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #ef778c; font-weight: bold;">Delete</li>')
+          .show(100);
         }
-        // annotation exists at these positions
-        // add annotation
         else {
           mostRecentIndex = tagModel.addAnnotation(range, tagModel.currentCategory);
           renderHighlights();
@@ -850,8 +844,8 @@ String.prototype.escapeHtml = function () {
   return this.replace(/<|>/g, "_");
 };
 
-// truncate string and add ellipsis 
-// truncAfterWord will only truncate on spaces 
+// truncate string and add ellipsis
+// truncAfterWord will only truncate on spaces
 // returns entire word, up to n characters, if string contains no spaces
 String.prototype.trunc = function (n, truncAfterWord = false) {
   if (this.length <= n) { return this; }
