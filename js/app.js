@@ -6,7 +6,6 @@
 var tagModel = new TagModel();
 var textArea = $('#doc-view');
 var highlightArea = $('#highlightArea');
-var label_list = $('#label-list');
 var hiddenAnno_list = [];
 var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
@@ -168,16 +167,18 @@ textArea.on('contextmenu', function (e) {
 
 // create new label
 $('#add-label').on('click', function () {
-  var newLabel = makeRandName();
-  console.log("CSS: Creating new category: [" + newLabel + "]");
-  let label = addLabel(newLabel);
-  let labelname = label.children(".label-name");
-  labelname[0].contentEditable = true;
-  labelname.focus().selectText();
+  console.log("Generating a new label...");
+
+  let label = addLabel();
+  let labelName = label.children(".label-name");
+
+  //let user type name
+  labelName[0].contentEditable = true;
+  labelName.focus().selectText();
 });
 
 //change the document's label context
-label_list.on('mouseup', '.label', function () {
+$('#label-list').on('mouseup', '.label', function () {
   //change label selection
   tagModel.currentCategory = this.getAttribute('value');
   $('.label').attr('id', '');                   //remove label-selected from all
@@ -185,7 +186,7 @@ label_list.on('mouseup', '.label', function () {
 });
 
 // on label right click
-label_list.on('contextmenu', function (e) {
+$('#label-list').on('contextmenu', function (e) {
   delete_menu.append(
     $('<li/>', {
       class: 'delete-label',
@@ -200,7 +201,7 @@ label_list.on('contextmenu', function (e) {
 });
 
 //edit label name
-label_list.on('dblclick', '.label', function () {
+$('#label-list').on('dblclick', '.label', function () {
   //enble editing
   $(this).children('.label-name')[0].contentEditable = true;
   //open textbox
@@ -208,21 +209,20 @@ label_list.on('dblclick', '.label', function () {
 });
 
 // user pressed enter on label name change
-label_list.on('keypress', '.label-name', function (e) {
+$('#label-list').on('keypress', '.label-name', function (e) {
   if (e.which === 13) {
     $(this).blur();
   }
 });
 
 //stopped editing label name
-label_list.on('blur', '.label-name', function () {
+$('#label-list').on('blur', '.label-name', function () {
   //disable editing
   this.contentEditable = false;
 
   //fix whitespace and create new label name with no spaces (class names can't have spaces)
   let newName = $(this).text().trim().replace(/\s+/g, "_").replace(/<|>|&/g, '');
   $(this).text(newName);
-  console.log("Attempting to change label name from " + tagModel.currentCategory + " to " + newName);
 
   //check if the name is the same as previous
   if (newName === tagModel.currentCategory) {
@@ -232,8 +232,9 @@ label_list.on('blur', '.label-name', function () {
 
   //check for valid label name
   if ((tagModel.categoryIndex(newName) >= 0) || newName === '') {
-    console.log('Aborting: Invalid label name: "' + newName + '"');
-    $(this).text(tagModel.currentCategory);
+    console.log('Aborting label name change: already exists: "' + newName + '"');
+    alert("This label already exists! Please try again.");
+    deleteLabel();
     return;
   }
 
@@ -254,7 +255,7 @@ label_list.on('blur', '.label-name', function () {
 });
 
 //invoke colorpicker on icon click
-label_list.on('click', '.colorChange', function () {
+$('#label-list').on('click', '.colorChange', function () {
   console.log('dropperClicked!');
   $('#colorChangePicker').click();   //invoke color picker
 });
@@ -354,16 +355,7 @@ delete_menu.on('click', 'li', function () {
   }
   // delete label
   else if ($(this).hasClass('delete-label')) {
-    //remove category
-    tagModel.deleteCategory();
-    console.log('Category Deleted');
-    resize();
-    // change label selected visually
-    $('#label-selected').remove();
-    if (tagModel.currentDoc != null) {
-      $('.label[value="' + tagModel.currentCategory + '"]').attr('id', 'label-selected');
-    }
-    mostRecentIndex = -1;
+    deleteLabel();
   }
   // delete document
   else if ($(this).hasClass('delete-doc')) {
@@ -401,8 +393,12 @@ $(window).on('resize', function () {
   $(window).scrollTop(scrollPercent * $(document).height());
 });
 
-// ----- functions ----- //
 
+
+
+
+
+// ----- functions ----- //
 // export zip function
 function exportZip() {
   console.log("Zip export requested...");
@@ -426,6 +422,18 @@ function exportZip() {
         });
     });
 }
+
+function deleteLabel() {
+  console.log('Deleting label: [' + tagModel.currentCategory + ']');
+  tagModel.deleteCategory();
+  resize();
+  $('#label-selected').remove();
+  if (tagModel.currentDoc != null && tagModel.currentCategory !== null) {
+    $('.label[value="' + tagModel.currentCategory + '"]').attr('id', 'label-selected');
+  }
+  mostRecentIndex = -1;
+}
+
 
 // export json function
 function exportAllJson() {
@@ -508,18 +516,11 @@ function addDoc(doc) {
 }
 
 //add new label
-function addLabel(name, color = null) {
-  // check if name already belongs
-  if (tagModel.categoryIndex(name) !== -1) {
-    alert('Failed to add label "' + name + '": label already exists!');
-    return null;
-  }
+function addLabel(name = 'init') {
+  //generate random color
+  var color = makeRandColor();
 
-  // does not already belong
-  // check for specific color
-  if (color === null) {
-    color = makeRandColor();
-  }
+  //add initialization category to the model
   tagModel.addCategory(name, color);
 
   // add highlight rule to page
@@ -535,7 +536,7 @@ function addLabel(name, color = null) {
   tagModel.currentCategory = name;
   $('#label-selected').attr('id', '');
 
-  // add category to page
+  // create label div
   var newLabel = $('<div/>', {
     class: 'hoverWhite label',
     id: 'label-selected',
@@ -549,16 +550,16 @@ function addLabel(name, color = null) {
   ).append(
     $('<div/>', {
       class: 'label-name'
-    }).text(name)
+    }).text('')
   );
 
-  label_list.append(newLabel);
+  //add to label list
+  $('#label-list').append(newLabel);
 
   // go to new label's postion
-  label_list.scrollTop(label_list.prop('scrollHeight'));
+  $('#label-list').scrollTop($('#label-list').prop('scrollHeight'));
 
   // first color => make current category the color
-  tagModel.currentCategory = name;
   $('.label[value=' + name + ']').attr('id', 'label-selected');
 
   return newLabel;
