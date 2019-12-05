@@ -14,13 +14,34 @@ body {
   font-family: 'H', 'Trebuchet MS', Helvetica;
 }
 
-#draggable {
-  -webkit-app-region: drag; 
-  position: absolute; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 2em; 
+#splash {
+  position: absolute;
+  bottom: 0;
+  z-index: 4;
+  width: 100vw;
+  height: 100vh;
+  background-color: #5E42A6;
+}
+
+#splashIcon {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 30vh;
+  position: absolute;
+  margin: auto;
+}
+
+#splashBg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 40%;
+  background: url("../images/intro.svg") top left;
+  background-size: 100% 100%;
 }
 
 img, #logoContainer {
@@ -61,7 +82,6 @@ img, #logoContainer {
 
 #logo {
   max-height: 5vh;
-  cursor: pointer;
 }
 
 #searchContainer {
@@ -189,9 +209,12 @@ img, #logoContainer {
   transition: background-color 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease;
 }
 
-.bButton:hover {
+.bButton:hover, .annButton:hover, .dlButton:not(#trainName):hover, .trainButton:hover {
   background-color: white !important;
   color: black !important;
+}
+
+#annotateBtn {
   cursor: pointer;
 }
 
@@ -210,7 +233,7 @@ img, #logoContainer {
   flex-direction: column;
 }
 
-.dlButton {
+.dlButton, .annButton, .trainButton {
   height: 5vh;
   border: 0;
   font-weight: bold;
@@ -222,10 +245,9 @@ img, #logoContainer {
   transition: background-color 0.3s ease, font-size 0.3s ease, border-radius 0.3s ease;
 }
 
-.dlButton:hover {
-  background-color: white !important;
-  color: black !important;
-  cursor: pointer;
+#modelPath {
+  background-color: #5E42A6;
+  color: white;
 }
 
 #centerContainer {
@@ -268,7 +290,6 @@ img, #logoContainer {
 }
 
 #rightContainer:hover {
-  box-shadow: 0 0 10px white;
   overflow: overlay;
 }
 
@@ -443,6 +464,57 @@ h1, h2 {
 
 #delete-menu li:hover {
   text-decoration: underline;
+}
+
+#consoleContainer {
+  position: absolute;
+  margin: -2em;
+  bottom: 2em;
+  width: 100%;
+  height: 1vh;
+  transition: height 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+}
+
+#console {
+  position: absolute;
+  bottom: 0;
+  margin: 0;
+  width: calc(100% - 4em);
+  height: 100%;
+  background-color: black;
+  color: lime;
+  padding: 0 2em 1em 2em;
+  font-size: 14px;
+  overflow-y: scroll;
+  font-family: 'Courier New', Courier, monospace;
+  text-align: left;
+}
+
+#console::-webkit-scrollbar {
+  display: none;
+}
+
+#console li {
+  list-style-type: none;
+  padding-left: 1em;
+  text-indent: -1em;
+}
+
+#consoleArrow {
+  z-index: 1;
+  position: absolute;
+  margin-top: -2.5em;
+  margin-left: -1em;
+  transition: transform 0.3s ease, content 0.3s ease;
+}
+
+#rightArrow {
+  margin-left: -4.3em;
+  margin-top: 45vh;
+  transform: rotateZ(90deg);
+  position: fixed;
 }
 
 .noDisplay {

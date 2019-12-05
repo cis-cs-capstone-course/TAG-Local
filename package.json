@@ -1,15 +1,28 @@
 {
-  "name": "Tag",
+  "name": "TAG",
   "version": "1.0.0",
   "description": "A text annotation engine",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "package": "electron-packager . --icon=./assets/tag.ico --overwrite",
+    "build": "electron-builder ."
   },
   "build": {
+    "appId": "TAG",
     "win": {
       "target": [
         "nsis"
+      ],
+      "icon": "assets/tag.ico",
+      "extraResources": [
+        {
+          "from": "py",
+          "to": "py",
+          "filter": [
+            "**/*"
+          ]
+        }
       ]
     },
     "nsis": {
@@ -31,10 +44,13 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "^7.1.1",
+    "electron-builder": "^21.2.0",
     "spectron": "^9.0.0"
   },
   "dependencies": {
+    "electron-packager": "^14.1.0",
     "jquery": "^3.4.1",
+    "path": "^0.12.7",
     "python-shell": "^1.0.8"
   }
 }

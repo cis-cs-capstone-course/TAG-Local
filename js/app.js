@@ -6,11 +6,16 @@
 var tagModel = new TagModel();
 var textArea = $('#doc-view');
 var highlightArea = $('#highlightArea');
-var label_list = $("#label-list");
+var label_list = $('#label-list');
+var hiddenAnno_list = [];
 var delete_menu = $('#delete-menu');
 var doc_list = $('#doc-list');
 var deleteList = [];
 var mostRecentIndex = -1;
+var path = require('path');
+const { dialog } = require('electron').remote;
+
+
 // --------------events-------------- //
 
 // clicked anywhere
@@ -23,208 +28,80 @@ $(document).on("mousedown", function (e) {
   }
 });
 
-// download Zip
+// download zip
 $('#dlZip').on('click', function () {
-  console.log("Zip download requested...");
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to download!');
-    return;
-  }
-  let zip = tagModel.getAsZip();
-  zip.generateAsync({ type: "blob" }).then(function (content) {
-    saveAs(content, "annotations.zip");
-  });
+  exportZip();
 });
 
-// download Json
+// download json
 $('#dlJson').on('click', function () {
-  console.log("JSON download requested...");
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to download!');
-    return;
-  }
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
-  saveAs(blob, "annotations.json");
+  exportAllJson();
 });
-
-// send to mldata
-$('#sendML').on('click', function () {
-  // no files found
-  if (tagModel.openDocs.length === 0) {
-    alert('Error: No data to send!');
-    return;
-  }
-  // prepare data
-
-  var blob = new Blob([tagModel.exportAsString()], { type: 'application/JSON' });
-  var formData = new FormData();
-  console.log("Sending data to ML");
-
-  formData.append("jsonUpload", blob)
-    .append("save-model", $("#save-model").is(':checked'))
-    .append("load-model", $("#load-model").is(':checked'));
-  $.ajax({
-    type: "POST",
-    url: "mldata",
-    contentType: false,
-    processData: false,
-    cache: false,
-    enctype: "multipart/form-data",
-    data: formData,
-    success: function (data) {
-      console.log("Data received from algorithm");
-      loadJsonData(data, obliterate = true);
-    },
-    error: function (XMLHttpRequest, textStatus, errorThrown) {
-      console.log("Send failed: \nStatus: " + textStatus + "\nError: " + errorThrown);
-    }
-  });
-});
-
-// add document
-$("#fileInputControl").on("change", function () {
-  console.log("Found " + this.files.length + " files");
-  // add each file to documents
-  [].forEach.call(this.files, function (file) {
-    uploadDocFromFile(file);
-  });
-  this.value = "";
-});
-
-function uploadDocFromFile(file) {
-  // clean up name of string and check if already belongs
-  let fileName = file.name.replace(/\s+/g, "_").replace(/[^A-Za-z0-9\.\-\_]/g, '');
-  if (tagModel.docIndex(fileName) !== -1) {
-    alert("File already uploaded for: '" + fileName + "'\n");
-  }
-  // txt
-  if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
-    console.log("Found txt file: '" + fileName + "'");
-    // read, create, and add file
-    let fileReader = new FileReader(file);
-    fileReader.onload = function () {
-      let newDoc = new Doc(fileName, fileReader.result.replace(/[\r\t\f\v\ ]+/g, " "));
-      addDoc(newDoc);
-    };
-    fileReader.readAsText(file);
-  }
-  // json
-  else if (fileName.match(/.*\.json$/g) !== null) {
-    console.log("Found json file: '" + fileName + "'");
-    // read, create, and add file
-    let fileReader = new FileReader(file);
-    fileReader.onload = function () {
-      let newJson = fileReader.result.replace(/[\r\t\f\v\ ]+/g, " ");
-      let errors = loadJsonData(JSON.parse(newJson));
-      if (errors.length > 0) {
-        alert(errors);
-      }
-    };
-    fileReader.readAsText(file);
-  }
-  // zip
-  else if (fileName.match(/.*\.zip$/g) !== null) {
-    console.log("Found zip file: '" + fileName + "'");
-    uploadDocsFromZipFile(file);
-  }
-  // wasn't one of the file types
-  else {
-    alert("File type not supported for: '" + fileName + "'");
-  }
-  // name matches one of the files already uploaded
-}
-
-function uploadDocsFromZipFile(file) {
-  // load zip file
-  JSZip.loadAsync(file).then(function (zip) {
-    // do each file within zip
-    [].forEach.call(Object.keys(zip.files), function (fileName) {
-      if (tagModel.docIndex(fileName) !== -1) {
-        alert("File already uploaded for: '" + fileName + "' in zip");
-        return;
-      }
-      // mac compressed?
-      if (fileName.match(/^__MACOSX/g) !== null) {
-        alert("Ignored __MACOSX compression file: '" + fileName + "'");
-        return;
-      }
-      // find file format then add
-      zip.files[fileName].async('string').then(function (fileContents) {
-        // zip
-        if (fileName.match(/.*\.text$|.*\.txt$/g) !== null) {
-          console.log("Found txt file: '" + fileName + "' in zip");
-          let newDoc = new Doc(fileName, fileContents.replace(/[\r\t\f\v\ ]+/g, " "));
-          addDoc(newDoc);
-        }
-        // json
-        else if (fileName.match(/.*\.json$/g) !== null) {
-          console.log("Found json file: '" + fileName + "' in zip");
-          let newJson = fileContents.replace(/[\r\t\f\v\ ]+/g, " ");
-          let errors = loadJsonData(JSON.parse(newJson));
-          if (errors.length > 0) {
-            alert(errors);
-          }
-        }
-        // wasn't one of the file types
-        else {
-          alert("File type not supported for: '" + fileName + "'\n");
-        }
-      });
-    });
-  });
-}
 
 // check a or d button pressed
 var aKeyPressed = false;
 var dKeyPressed = false;
+// key pressed
 $(window).keydown(function (e) {
   if (e.which === 65) {
     aKeyPressed = true;
   } else if (e.which === 68) {
     dKeyPressed = true;
   }
-}).keyup(function (e) {
-  if (e.which === 65) {
-    aKeyPressed = false;
-  } else if (e.which === 68) {
-    dKeyPressed = false;
-  }
-});
+})
+  // key released
+  .keyup(function (e) {
+    if (e.which === 65) {
+      aKeyPressed = false;
+    } else if (e.which === 68) {
+      dKeyPressed = false;
+    }
+  });
 
 // on mouse release, highlight selected text
 textArea.on('mouseup', function (e) {
+  // left click release
   if (e.which === 1) {
+    // check for label
+    if (tagModel.currentCategory === null) {
+      alert('Error: Please create a label!');
+      return;
+    }
+    // check for document
+    if (tagModel.currentDoc === null) {
+      alert('Error: Please add a document!');
+      return;
+    }
+
+    // there is a label and document
+    // get text selected
+    let range = {};
     if (textArea[0].selectionStart < textArea[0].selectionEnd) {
-      if (tagModel.currentCategory === null) {
-        alert('Error: Please create a label!');
-        return;
-      }
-      if (tagModel.currentDoc === null) {
-        alert('Error: Please add a document!');
-        return;
-      }
-      let range = {
+      // selected text
+      range = {
         startPosition: textArea[0].selectionStart,
         endPosition: textArea[0].selectionEnd
       };
 
-      let belongs = tagModel.currentDoc.getIndicesByRange(range, tagModel.currentCategory);
 
+      var hasExistingAnnotation = tagModel.currentDoc.getIndicesByRange(range, tagModel.currentCategory).length > 0;
+
+      // a key
       if (aKeyPressed) {
         mostRecentIndex = tagModel.addAnnotation(range, tagModel.currentCategory);
         renderHighlights();
         clearSelection();
-      } else if (dKeyPressed) {
-        if (belongs.length > 0) {
+      }
+      else if (dKeyPressed) {
+        if (hasExistingAnnotation) {
           tagModel.removeAnnotationByRange(range);
           mostRecentIndex = -1;
           renderHighlights();
           clearSelection();
         }
       } else {
-        delete_menu.css({
+        if (hasExistingAnnotation) {
+          delete_menu.css({
           top: e.pageY,
           left: e.pageX,
           'min-width': ''
@@ -233,6 +110,12 @@ textArea.on('mouseup', function (e) {
           .append('<li class="add-anno" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #b7e8c7; font-weight: bold;">Add</li>')
           .append('<li class="delete-anno-part" value="' + range.startPosition + ' ' + range.endPosition + '" style="background-color: #ef778c; font-weight: bold;">Delete</li>')
           .show(100);
+        }
+        else {
+          mostRecentIndex = tagModel.addAnnotation(range, tagModel.currentCategory);
+          renderHighlights();
+          clearSelection();
+        }
       }
     }
   }
@@ -240,39 +123,46 @@ textArea.on('mouseup', function (e) {
 
 // on right click, show annotations at position to delete
 textArea.on('contextmenu', function (e) {
+  // check for document
   if (tagModel.currentDoc === null) {
     return;
   }
+  // check if annotations exist
   let position = textArea[0].selectionStart;
   deleteList = tagModel.currentDoc.getAnnotationsAtPos(position);
+  // annotations don't exist
+  // do nothing
+  if (deleteList.length === 0) {
+    return;
+  }
 
-  if (deleteList.length > 0) {
+  // annotations exist
+  // show delete menu
+  delete_menu.append(
+    $('<h6/>', {
+      html: 'Delete Annotation:'
+    })
+  ).append(
+    $('<hr/>', {
+      style: 'margin: 0;'
+    })
+  );
+  for (let i = 0; i < deleteList.length; i++) {
     delete_menu.append(
-      $('<h6/>', {
-        html: 'Delete Annotation:'
-      })
-    ).append(
-      $('<hr/>', {
-        style: 'margin: 0;'
-      })
-    );
-    for (let i = 0; i < deleteList.length; i++) {
-      delete_menu.append(
-        $('<li/>', {
-          class: 'delete-anno',
-          value: 'delete_anno_' + i,
-          style: 'background-color:' + tagModel.getColor(deleteList[i].label),
-          html: '<b>' + deleteList[i].label.trunc(10) + ': </b>'
-        }).append(
-          deleteList[i].content.trunc(20).escapeHtml()
-        )
-      ).show(100).
-        css({
-          top: e.pageY + 'px',
-          left: e.pageX + 'px',
-          'min-width': ''
-        });
-    }
+      $('<li/>', {
+        class: 'delete-anno',
+        value: 'delete_anno_' + i,
+        style: 'background-color:' + tagModel.getColor(deleteList[i].label),
+        html: '<b>' + deleteList[i].label.trunc(10) + ': </b>'
+      }).append(
+        deleteList[i].content.trunc(20).escapeHtml()
+      )
+    ).show(100).
+      css({
+        top: e.pageY + 'px',
+        left: e.pageX + 'px',
+        'min-width': ''
+      });
   }
 });
 
@@ -330,7 +220,7 @@ label_list.on('blur', '.label-name', function () {
   this.contentEditable = false;
 
   //fix whitespace and create new label name with no spaces (class names can't have spaces)
-  let newName = $(this).text().trim().replace(/\s+/g, "_").replace(/<|>/g, '');
+  let newName = $(this).text().trim().replace(/\s+/g, "_").replace(/<|>|&/g, '');
   $(this).text(newName);
   console.log("Attempting to change label name from " + tagModel.currentCategory + " to " + newName);
 
@@ -385,16 +275,18 @@ $('#colorChangePicker').on('change', function () {
 
 // add document button
 $('#add-document').on('click', function () {
-  // todo add name checking // no spaces
-  $('#fileInputControl').click();
+  getDocInput();
 });
 
 // change document
 doc_list.on('mouseup', '.doc-name', function (e) {
+  // get document selected
   tagModel.setCurrentDoc(this.getAttribute('value'));
   $('#doc-selected').attr('id', '');
   $(this).attr('id', 'doc-selected');
+  // change text
   textArea.text(tagModel.currentDoc.text.escapeHtml());
+
   mostRecentIndex = -1;
   renderHighlights();
   resize();
@@ -433,6 +325,7 @@ delete_menu.on('click', 'li', function () {
   delete_menu.hide(100);
   // add annotation
   if ($(this).hasClass('add-anno')) {
+    // parse values to delete
     let value = $(this).attr('value').split(' ');
     var range = {
       startPosition: parseInt(value[0]),
@@ -461,9 +354,11 @@ delete_menu.on('click', 'li', function () {
   }
   // delete label
   else if ($(this).hasClass('delete-label')) {
+    //remove category
     tagModel.deleteCategory();
     console.log('Category Deleted');
     resize();
+    // change label selected visually
     $('#label-selected').remove();
     if (tagModel.currentDoc != null) {
       $('.label[value="' + tagModel.currentCategory + '"]').attr('id', 'label-selected');
@@ -472,25 +367,31 @@ delete_menu.on('click', 'li', function () {
   }
   // delete document
   else if ($(this).hasClass('delete-doc')) {
-    tagModel.deleteDoc();
+    // remove document
+    tagModel.deleteDoc(tagModel.currentDoc.title);
     console.log('Document Deleted');
+    // update text
     if (tagModel.currentDoc != null) {
       textArea.text(tagModel.currentDoc.text.escapeHtml());
     } else {
       textArea.text('');
     }
     resize();
+    // change doc selected visually
     $('#doc-selected').remove();
     if (tagModel.currentDoc != null) {
       $('.doc-name[value="' + tagModel.currentDoc.title + '"]').attr('id', 'doc-selected');
     }
     mostRecentIndex = -1;
-  } else if ($(this).hasClass('delete-anno-list')) {
+  }
+  // delete annotation by list
+  else if ($(this).hasClass('delete-anno-list')) {
     let value = $(this).attr('value');
     tagModel.removeAnnotationByIndex(value);
     mostRecentIndex = -1;
   }
   renderHighlights();
+  clearSelection();
 });
 
 // update size when window is resized
@@ -502,12 +403,93 @@ $(window).on('resize', function () {
 
 // ----- functions ----- //
 
+// export zip function
+function exportZip() {
+  console.log("Zip export requested...");
+  // no files found
+  if (tagModel.openDocs.length === 0) {
+    alert('Error: No data to export!');
+    return;
+  }
+  let zip = tagModel.getAsZip();
+  dialog.showSaveDialog(remote.getCurrentWindow())
+    .then(result => {
+      let savePath = result.filePath;
+      if (path.extname(savePath) != '.zip') {
+        savePath += '.zip';
+      }
+      zip
+        .generateNodeStream({ type: 'nodebuffer', streamFiles: true })
+        .pipe(fs.createWriteStream(savePath))
+        .on('finish', function () {
+          console.log("Created zip file: ", savePath);
+        });
+    });
+}
+
+// export json function
+function exportAllJson() {
+  console.log("JSON download requested...");
+  // no files found
+  if (tagModel.openDocs.length === 0) {
+    alert('Error: No data to download!');
+    return;
+  }
+
+  dialog.showSaveDialog(remote.getCurrentWindow())
+    .then((result) => {
+      let savePath = result.filePath;
+      if (path.extname(savePath) != '.json') {
+        savePath += '.json';
+      }
+      fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
+        if (err) {
+          alert("An error ocurred creating the file " + err.message);
+        }
+        alert("Succesfully saved: ", savePath);
+        console.log("Saved file: ", savePath);
+      });
+    });
+}
+
+// add document
+function getDocInput() {
+  dialog.showOpenDialog(remote.getCurrentWindow(), {
+    title: "Select a folder",
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: 'Docs', extensions: ['txt', 'json'] }]
+  }).then(function (data) {
+    let invalidFiles = "";
+    data.filePaths.forEach((file) => {
+      let name = path.basename(file);
+      let extension = path.extname(file);
+      let content = fs.readFileSync(file, 'utf8');
+      if (extension == '.json') {
+        loadJsonData(JSON.parse(content));
+      } else {
+        let doc = new Doc(name, content.replace(/\n/g, ' '));
+        if (!addDoc(doc)) {
+          invalidFiles += "Already added " + doc.title + "\n";
+          console.log("Already added ", doc.title);
+        }
+      }
+    });
+    if (invalidFiles != "") {
+      alert(invalidFiles);
+    }
+  });
+}
+
 //add new document
 function addDoc(doc) {
-  tagModel.addDoc(doc);
+  // try to add document
+  if (!tagModel.addDoc(doc)) {
+    return false;
+  }
+  // added document
+  // set current document to new document
   tagModel.setCurrentDoc(doc.title.escapeHtml());
   textArea.text(tagModel.currentDoc.text.escapeHtml());
-  resize();
   $('#doc-selected').attr('id', '');
   doc_list.append(
     $('<h6/>', {
@@ -517,60 +499,68 @@ function addDoc(doc) {
       html: doc.title.escapeHtml()
     })
   );
+  doc_list.scrollTop(doc_list.prop('scrollHeight'));
+
+  resize();
   mostRecentIndex = -1;
   renderHighlights();
-  doc_list.scrollTop(doc_list.prop('scrollHeight'));
-};
+  return true;
+}
 
 //add new label
 function addLabel(name, color = null) {
-  if (tagModel.categoryIndex(name) === -1) {
-    if (color === null) {
-      color = makeRandColor();
-    }
-    tagModel.addCategory(name, color);
-
-    // add highlight rule to page
-    $('head').append(
-      $('<style/>', {
-        id: name + '-style',
-        class: 'highlight-style',
-        html: '.hwt-content .label_' + name + ' {background-color: ' + color + ';}'
-      })
-    );
-
-    // select new category
-    tagModel.currentCategory = name;
-    $('#label-selected').attr('id', '');
-
-    // add category to page
-    var newLabel = $('<div/>', {
-      class: 'hoverWhite label',
-      id: 'label-selected',
-      value: name,
-      style: "background-color: " + color
-    }).append(
-      $('<img/>', {
-        class: 'colorChange',
-        src: 'images/dropper.png',
-      })
-    ).append(
-      $('<div/>', {
-        class: 'label-name'
-      }).text(name)
-    );
-
-    $('#label-list').append(newLabel);
-
-    // go to new label's postion
-    $('#label-list').scrollTop($('#label-list').prop('scrollHeight'));
-
-    // first color => make current category the color
-    tagModel.currentCategory = name;
-    $('.label[value=' + name + ']').attr('id', 'label-selected');
-  } else {
-    console.log('Failed to add label "' + name + '": label already exists!');
+  // check if name already belongs
+  if (tagModel.categoryIndex(name) !== -1) {
+    alert('Failed to add label "' + name + '": label already exists!');
+    return null;
   }
+
+  // does not already belong
+  // check for specific color
+  if (color === null) {
+    color = makeRandColor();
+  }
+  tagModel.addCategory(name, color);
+
+  // add highlight rule to page
+  $('head').append(
+    $('<style/>', {
+      id: name + '-style',
+      class: 'highlight-style',
+      html: '.hwt-content .label_' + name + ' {background-color: ' + color + ';}'
+    })
+  );
+
+  // select new category
+  tagModel.currentCategory = name;
+  $('#label-selected').attr('id', '');
+
+  // add category to page
+  var newLabel = $('<div/>', {
+    class: 'hoverWhite label',
+    id: 'label-selected',
+    value: name,
+    style: "background-color: " + color
+  }).append(
+    $('<img/>', {
+      class: 'colorChange',
+      src: 'images/dropper.png',
+    })
+  ).append(
+    $('<div/>', {
+      class: 'label-name'
+    }).text(name)
+  );
+
+  label_list.append(newLabel);
+
+  // go to new label's postion
+  label_list.scrollTop(label_list.prop('scrollHeight'));
+
+  // first color => make current category the color
+  tagModel.currentCategory = name;
+  $('.label[value=' + name + ']').attr('id', 'label-selected');
+
   return newLabel;
 }
 
@@ -595,13 +585,14 @@ function makeRandColor() {
 }
 
 // import json data
-function loadJsonData(data, filename = "", obliterate = false, ) {
+function loadJsonData(data, filename = "", obliterate = false) {
   if (obliterate) {
     console.log('Displaying new data');
-    tagModel = new TagModel();
-    $('.label').remove();
-    $('.highlight-style').remove();
-    $('.doc-name').remove();
+
+    $.each(data, function () {
+      tagModel.deleteDoc(this.title);
+      $('.doc-name[value="' + this.title + '"]').remove();
+    });
   }
 
   // for invalid files
@@ -610,8 +601,8 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
   // add remove annotation from annotation list
   try {
     // json array
-    data.forEach(function (doc) {
-      addJsonElement(doc);
+    $.each(data, function () {
+      addJsonElement(this);
     });
   } catch (err) {
     // caught an error
@@ -620,7 +611,7 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
       try {
         addJsonElement(data);
       } catch (innerErr) {
-        alert("Not valid json Input")
+        console.log("Not valid JSON input");
       }
     }
     // we shouldn't be here
@@ -636,7 +627,7 @@ function loadJsonData(data, filename = "", obliterate = false, ) {
       return;
     }
     // create and add doc
-    var newDoc = new Doc(doc.title, doc.text);
+    var newDoc = new Doc(doc.title, doc.text.replace(/\n/g, ' '));
     addDoc(newDoc);
     tagModel.currentDoc = newDoc;
     doc.annotations.forEach(function (annotation) {
@@ -684,26 +675,27 @@ function renderHighlights() {
   }
   // inital padding height
   let padding = 0;
-  // set annotation number
-  let annoNum = 0;
   // do each category
   for (let category of labelSortedAnnos) {
     // annotations list
     if (category.length === 0) {
       continue;
     }
+
     var annoHeader = $('<h2/>', {
-      html: category[0].label + '<img class="dropArrow upsideDown" src="images/arrowDownWhite.png">',
+      html: category[0][0].label + '<img class="dropArrow upsideDown" src="images/arrowDownWhite.png">',
       class: 'annoHeader hoverWhite',
-      value: tagModel.getColor(category[0].label)
+      value: tagModel.getColor(category[0][0].label)
     });
     $('#anno-list').append(annoHeader).append(
       $('<ul/>', {
         class: 'anno-group',
-        value: category[0].label
+        value: category[0][0].label
       })
     );
-    annoHeader.click();
+    if (hiddenAnno_list.indexOf(category[0][0].label) !== -1) {
+      annoHeader.click();
+    }
     // create highlight area
     var highlights = $('<div/>', {
       class: "hwt-highlights hwt-content"
@@ -714,19 +706,18 @@ function renderHighlights() {
     // do each annotation for current category
     for (let anno of category) {
       // add annotation to label
-      $('.anno-group[value="' + anno.label + '"]').append(
+      $('.anno-group[value="' + anno[0].label + '"]').append(
         $('<li/>', {
           class: 'annotation hoverWhite',
-          style: 'background-color: ' + tagModel.getColor(anno.label),
-          value: annoNum
-        }).text(anno.content.trunc(20, true).escapeHtml())
+          style: 'background-color: ' + tagModel.getColor(anno[0].label),
+          value: anno[1]
+        }).text(anno[0].content.trunc(20, true).escapeHtml())
       );
 
       // Add text before highlight then the highlight itself
-      newText += text.substring(lastIndex, anno.range.startPosition);
-      newText += '<mark class="highlight label_' + anno.label + '" value="' + annoNum + '" style="padding: ' + padding + 'px 0;">' + text.substring(anno.range.startPosition, anno.range.endPosition) + '</mark>';
-      lastIndex = anno.range.endPosition;;
-      annoNum += 1;
+      newText += text.substring(lastIndex, anno[0].range.startPosition);
+      newText += '<mark class="highlight label_' + anno[0].label + '" value="' + anno[1] + '" style="padding: ' + padding + 'px 0;">' + text.substring(anno[0].range.startPosition, anno[0].range.endPosition) + '</mark>';
+      lastIndex = anno[0].range.endPosition;
     }
     //update padding size
     padding += offset;
@@ -743,7 +734,7 @@ function renderHighlights() {
     );
   }
   // update most recent
-  if (mostRecentIndex != -1) {
+  if (mostRecentIndex !== -1) {
     $('#recent').text(tagModel.currentDoc.annotations[mostRecentIndex].content.trunc(20, true).escapeHtml()).css('background-color', tagModel.getColor(tagModel.currentDoc.annotations[mostRecentIndex].label)).attr('value', mostRecentIndex);
     $('#recentArea').css('display', 'block');
   }
@@ -753,11 +744,13 @@ function renderHighlights() {
   }
 }
 
+// clears selected text
 function clearSelection() {
   var selection = window.getSelection ? window.getSelection() : document.selection ? document.selection : null;
   if (selection) selection.empty ? selection.empty() : selection.removeAllRanges();
 }
 
+// scroll to position of annotation
 function jumpToAnno(num) {
   $(window).scrollTop($('.highlight[value="' + num + '"]').offset().top);
 }
@@ -765,9 +758,11 @@ function jumpToAnno(num) {
 // pass as safe text
 String.prototype.escapeHtml = function () {
   return this.replace(/<|>/g, "_");
-}
+};
 
-// truncate string and add ellipsis // truncAfterWord will only truncate on spaces // returns entire word if string contains no spaces
+// truncate string and add ellipsis
+// truncAfterWord will only truncate on spaces
+// returns entire word, up to n characters, if string contains no spaces
 String.prototype.trunc = function (n, truncAfterWord = false) {
   if (this.length <= n) { return this; }
   let subString = this.substr(0, n - 1);
