@@ -27,7 +27,8 @@
     },
     "linux": {
       "target": [
-        "deb", "AppImage"
+        "deb",
+        "AppImage"
       ],
       "icon": "assets/icons",
       "category": "Utility",
