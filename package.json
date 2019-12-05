@@ -27,9 +27,10 @@
     },
     "linux": {
       "target": [
-        "deb"
+        "deb", "AppImage"
       ],
-      
+      "icon": "assets/icons",
+      "category": "Utility",
       "extraResources": [
         {
           "from": "py",
@@ -44,7 +45,8 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/tag.ico",
+      "icon": "assets/icons",
+      "category": "Utility",
       "extraResources": [
         {
           "from": "py",
