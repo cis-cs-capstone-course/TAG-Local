@@ -429,8 +429,18 @@ function exportZip() {
 
 // export json function
 function exportAllJson() {
-  console.log("JSON download requested...");
+  console.log("JSON download (all docs) requested...");
   // no files found
+  exportAsJson(isAllDocs=true);
+}
+
+function exportCurrentJson(){
+  console.log("JSON download (current doc) requested ...");
+  exportAsJson(isAllDocs=false);
+}
+
+function exportAsJson(isAllDocs) {
+
   if (tagModel.openDocs.length === 0) {
     alert('Error: No data to download!');
     return;
@@ -442,7 +452,7 @@ function exportAllJson() {
       if (path.extname(savePath) != '.json') {
         savePath += '.json';
       }
-      fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
+      fs.writeFile(savePath, tagModel.jsonifyData(isAllDocs), (err) => {
         if (err) {
           alert("An error ocurred creating the file " + err.message);
         }

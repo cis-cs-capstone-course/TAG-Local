@@ -61,7 +61,8 @@ const template = [
         click: getDocInput
       },
       { type: 'separator' },
-      { label: 'Export Current Document' },
+      { label: 'Export Current Document' ,
+        click: exportCurrentJson  },
       {
         label: 'Export All Documents',
         submenu: [
