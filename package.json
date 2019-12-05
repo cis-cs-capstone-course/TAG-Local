@@ -25,11 +25,20 @@
         }
       ]
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createStartMenuShortcut": true,
-      "createDesktopShortcut": true
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      
+      "extraResources": [
+        {
+          "from": "py",
+          "to": "py",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
     }
   },
   "repository": "https://github.com/electron/electron-quick-start",
@@ -40,7 +49,7 @@
     "tutorial",
     "demo"
   ],
-  "author": "GitHub",
+  "author": "TAG Team <keith.hudock@gmail.com>",
   "license": "CC0-1.0",
   "devDependencies": {
     "electron": "^7.1.1",
