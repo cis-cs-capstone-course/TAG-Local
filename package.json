@@ -39,6 +39,21 @@
           ]
         }
       ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/tag.ico",
+      "extraResources": [
+        {
+          "from": "py",
+          "to": "py",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
     }
   },
   "repository": "https://github.com/electron/electron-quick-start",
