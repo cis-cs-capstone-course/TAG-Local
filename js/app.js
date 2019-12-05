@@ -35,7 +35,8 @@ $('#dlZip').on('click', function () {
 
 // download json
 $('#dlJson').on('click', function () {
-  exportAllJson();
+  // exportAllJson();
+  exportCurrentJson();
 });
 
 // check a or d button pressed
