@@ -46,7 +46,7 @@
       "target": [
         "dmg"
       ],
-      "icon": "assets/icons",
+      "icon": "assets/icons/512x512.png",
       "category": "Utility",
       "extraResources": [
         {
