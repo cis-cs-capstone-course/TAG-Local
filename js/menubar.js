@@ -61,19 +61,11 @@ const template = [
         click: getDocInput
       },
       { type: 'separator' },
-      { label: 'Export Current Document' },
+      { label: 'Export Current Document' ,
+        click: exportAsJson },
       {
-        label: 'Export All Documents',
-        submenu: [
-          {
-            label: 'As Zip',
-            click: exportZip
-          },
-          {
-            label: 'As JSON',
-            click: exportAllJson
-          }
-        ]
+        label: 'Export All Documents (Zip)',
+        click: exportAsZip
       }
     ]
   },
