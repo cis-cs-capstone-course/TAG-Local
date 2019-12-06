@@ -64,7 +64,7 @@ class Doc {
     var annotations = [];
     // do each category
     for (let category of tagModel.categories) {
-      // specfic label
+      // specific label
       if (label !== '') {
         if (category !== tagModel.categories[label]) {
           continue;
@@ -114,11 +114,10 @@ class Doc {
     // add remaining annotations
     for (let annotation of push) {
       this.sortedPush(annotation);
-    };
-    return;
+    }
   }
 
-  // remove specfic annotation
+  // remove specific annotation
   updateAnnotationList(blacklistAnnotation) {
     this.annotations = this.annotations.filter(function (annotation) {
       return annotation !== blacklistAnnotation;
