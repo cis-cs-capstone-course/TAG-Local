@@ -611,19 +611,49 @@ function handleZipFiles(file){
 
 function extractZipFiles(zip, zippedFiles, folder){
   let unzippedFiles = [];
+  let ignoredFiles = [];
   zippedFiles.forEach(function(filename) {
-    zip.file(filename).async('nodebuffer').then(function(content) {
-      var dest = path.join(folder, filename);
-      fs.writeFileSync(dest, content);
-      console.log("Extracted file: ", dest);
-      unzippedFiles.push(dest);
-      if(unzippedFiles.length == zippedFiles.length) {
-        console.log("All files unzipped");
-        loadFiles(unzippedFiles);
-      }
-    });
+    if (filename.match(/^__MACOSX/g) !== null) {
+      console.log("Ignored __MACOSX compression file: '" + filename + "'");
+      ignoredFiles.push(filename);
+    }
+    else {
+      zip.file(filename).async('nodebuffer').then(function(content) {
+        var dest = path.join(folder, filename);
+        fs.writeFileSync(dest, content);
+        console.log("Extracted file: ", dest);
+        unzippedFiles.push(dest);
+        if(unzippedFiles.length + ignoredFiles.length == zippedFiles.length) {
+          console.log("All files unzipped");
+          loadFiles(unzippedFiles);
+          removeTempFiles(unzippedFiles, folder);
+        }
+      });
+    }
   });
 }
+
+//CLEANUP old files in tempdirectory
+function removeTempFiles(unzippedFiles, folder){
+  unzippedFiles.forEach((file) => {
+    try {
+      fs.unlinkSync(file);
+      console.log("Deleted file: ", file);
+    //file removed
+    } catch(err) {
+      console.log("Unable to delete file: ", file);
+      console.error(err);
+    }
+  });
+  try {
+    fs.rmdirSync(folder);
+    console.log("Deleted temp directory: ", folder);
+  }catch(err){
+    console.log("Unable to remove directory, ", folder);
+    console.log(err);
+  }
+}
+
 //add new document
 function addDoc(doc) {
   // try to add document
