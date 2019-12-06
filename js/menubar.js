@@ -62,19 +62,10 @@ const template = [
       },
       { type: 'separator' },
       { label: 'Export Current Document' ,
-        click: exportCurrentJson  },
+        click: exportAsJson },
       {
-        label: 'Export All Documents',
-        submenu: [
-          {
-            label: 'As Zip',
-            click: exportZip
-          },
-          {
-            label: 'As JSON',
-            click: exportAllJson
-          }
-        ]
+        label: 'Export All Documents (Zip)',
+        click: exportAsZip
       }
     ]
   },

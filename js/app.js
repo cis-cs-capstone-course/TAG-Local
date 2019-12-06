@@ -29,15 +29,10 @@ $(document).on("mousedown", function (e) {
 });
 
 // download zip
-$('#dlZip').on('click', function () {
-  exportZip();
-});
+$('#dlZip').on('click', exportAsZip);
 
 // download json
-$('#dlJson').on('click', function () {
-  // exportAllJson();
-  exportCurrentJson();
-});
+$('#dlJson').on('click', exportAsJson);
 
 // check a or d button pressed
 var aKeyPressed = false;
@@ -405,7 +400,7 @@ $(window).on('resize', function () {
 // ----- functions ----- //
 
 // export zip function
-function exportZip() {
+function exportAsZip() {
   console.log("Zip export requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
@@ -429,18 +424,9 @@ function exportZip() {
 }
 
 // export json function
-function exportAllJson() {
-  console.log("JSON download (all docs) requested...");
-  // no files found
-  exportAsJson(isAllDocs=true);
-}
 
-function exportCurrentJson(){
-  console.log("JSON download (current doc) requested ...");
-  exportAsJson(isAllDocs=false);
-}
 
-function exportAsJson(isAllDocs) {
+function exportAsJson() {
 
   if (tagModel.openDocs.length === 0) {
     alert('Error: No data to download!');
@@ -450,14 +436,17 @@ function exportAsJson(isAllDocs) {
   dialog.showSaveDialog(remote.getCurrentWindow())
     .then((result) => {
       let savePath = result.filePath;
+      if (savePath == null){
+        console.log("No savepath: exiting");
+        return;
+      }
       if (path.extname(savePath) != '.json') {
         savePath += '.json';
       }
-      fs.writeFile(savePath, tagModel.jsonifyData(isAllDocs), (err) => {
+      fs.writeFile(savePath, tagModel.jsonifyData(isAllDocs=false), (err) => {
         if (err) {
           alert("An error ocurred creating the file " + err.message);
         }
-        alert("Succesfully saved: ", savePath);
         console.log("Saved file: ", savePath);
       });
     });
