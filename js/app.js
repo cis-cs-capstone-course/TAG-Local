@@ -563,7 +563,7 @@ function loadFiles(filePaths) {
     let content = fs.readFileSync(file, 'utf8');
     if (extension == '.zip') {
       console.log("Found a zip file");
-      extractZipFiles(file);
+      handleZipFiles(file);
     } else if (extension == '.json') {
       console.log(content);
       loadJsonData(JSON.parse(content));
@@ -589,29 +589,41 @@ function loadTextData(name, content){
 }
 
 //TODO: add tempdir to store unzipped files, then delete temp_dir after loading
-function extractZipFiles(file){
-  let unzippedFiles = [];
+function handleZipFiles(file){
   fs.readFile(file, function(err, data) {
     if (!err) {
       var zip = new JSZip();
       zip.loadAsync(data).then(function(contents) {
         let zippedFiles = Object.keys(contents.files);
-        zippedFiles.forEach(function(filename) {
-          zip.file(filename).async('nodebuffer').then(function(content) {
-            var dest = filename;
-            fs.writeFileSync(dest, content);
-            unzippedFiles.push(dest);
-            if(unzippedFiles.length == zippedFiles.length) {
-              console.log("All files unzipped");
-              loadFiles(unzippedFiles);
-            }
-          });
+        const os = require('os');
+        fs.mkdtemp(path.join(os.tmpdir(), 'tag-'), (err, folder) => {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          console.log("Created temp directory: ", folder);
+          extractZipFiles(zip, zippedFiles, folder);
         });
       });
     }
   });
 }
 
+function extractZipFiles(zip, zippedFiles, folder){
+  let unzippedFiles = [];
+  zippedFiles.forEach(function(filename) {
+    zip.file(filename).async('nodebuffer').then(function(content) {
+      var dest = path.join(folder, filename);
+      fs.writeFileSync(dest, content);
+      console.log("Extracted file: ", dest);
+      unzippedFiles.push(dest);
+      if(unzippedFiles.length == zippedFiles.length) {
+        console.log("All files unzipped");
+        loadFiles(unzippedFiles);
+      }
+    });
+  });
+}
 //add new document
 function addDoc(doc) {
   // try to add document
