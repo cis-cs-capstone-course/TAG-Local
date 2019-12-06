@@ -588,7 +588,7 @@ function loadTextData(name, content){
   return true;
 }
 
-//TODO: add tempdir to store unzipped files, then delete temp_dir after loading
+
 function handleZipFiles(file){
   fs.readFile(file, function(err, data) {
     if (!err) {
@@ -609,6 +609,7 @@ function handleZipFiles(file){
   });
 }
 
+// extract the actual zip files
 function extractZipFiles(zip, zippedFiles, folder){
   let unzippedFiles = [];
   let ignoredFiles = [];
@@ -633,7 +634,7 @@ function extractZipFiles(zip, zippedFiles, folder){
   });
 }
 
-//CLEANUP old files in tempdirectory
+//remove unzipped files in tempdirectory (From Zip Upload)
 function removeTempFiles(unzippedFiles, folder){
   unzippedFiles.forEach((file) => {
     try {
