@@ -29,14 +29,10 @@ $(document).on("mousedown", function (e) {
 });
 
 // download zip
-$('#dlZip').on('click', function () {
-  exportZip();
-});
+$('#dlZip').on('click', exportAsZip);
 
 // download json
-$('#dlJson').on('click', function () {
-  exportAllJson();
-});
+$('#dlJson').on('click', exportAsJson);
 
 // check a or d button pressed
 var aKeyPressed = false;
@@ -410,7 +406,7 @@ $(window).on('resize', function () {
 // ----- functions ----- //
 
 // export zip function
-function exportZip() {
+function exportAsZip() {
   console.log("Zip export requested...");
   // no files found
   if (tagModel.openDocs.length === 0) {
@@ -434,9 +430,10 @@ function exportZip() {
 }
 
 // export json function
-function exportAllJson() {
-  console.log("JSON download requested...");
-  // no files found
+
+
+function exportAsJson() {
+
   if (tagModel.openDocs.length === 0) {
     alert('Error: No data to download!');
     return;
@@ -445,14 +442,17 @@ function exportAllJson() {
   dialog.showSaveDialog(remote.getCurrentWindow())
     .then((result) => {
       let savePath = result.filePath;
+      if (savePath == null){
+        console.log("No savepath: exiting");
+        return;
+      }
       if (path.extname(savePath) != '.json') {
         savePath += '.json';
       }
-      fs.writeFile(savePath, tagModel.exportAsString(), (err) => {
+      fs.writeFile(savePath, tagModel.jsonifyData(isAllDocs=false), (err) => {
         if (err) {
           alert("An error ocurred creating the file " + err.message);
         }
-        alert("Succesfully saved: ", savePath);
         console.log("Saved file: ", savePath);
       });
     });
@@ -463,27 +463,112 @@ function getDocInput() {
   dialog.showOpenDialog(remote.getCurrentWindow(), {
     title: "Select a folder",
     properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'Docs', extensions: ['txt', 'json'] }]
+    filters: [{ name: 'Docs', extensions: ['txt', 'json', 'zip'] }]
   }).then(function (data) {
-    let invalidFiles = "";
-    data.filePaths.forEach((file) => {
-      let name = path.basename(file);
-      let extension = path.extname(file);
-      let content = fs.readFileSync(file, 'utf8');
-      if (extension == '.json') {
-        loadJsonData(JSON.parse(content));
-      } else {
-        let doc = new Doc(name, content.replace(/\n/g, ' '));
-        if (!addDoc(doc)) {
-          invalidFiles += "Already added " + doc.title + "\n";
-          console.log("Already added ", doc.title);
-        }
+    loadFiles(data.filePaths);
+  });
+}
+
+
+function loadFiles(filePaths) {
+  console.log("LoadFiles called with : ", filePaths);
+  let invalidFiles = "";
+  filePaths.forEach((file) => {
+    let name = path.basename(file);
+    let extension = path.extname(file);
+    let content = fs.readFileSync(file, 'utf8');
+    if (extension == '.zip') {
+      console.log("Found a zip file");
+      handleZipFiles(file);
+    } else if (extension == '.json') {
+      console.log(content);
+      loadJsonData(JSON.parse(content));
+    } else if (extension == '.txt') {
+      if(!loadTextData(name, content)){
+        invalidFiles += "Already added " + name + "\n";
       }
-    });
-    if (invalidFiles != "") {
-      alert(invalidFiles);
     }
   });
+  if (invalidFiles != "") {
+    alert(invalidFiles);
+  }
+}
+
+
+function loadTextData(name, content){
+  let doc = new Doc(name, content.replace(/\n/g, ' '));
+  if (!addDoc(doc)) {
+    console.log("Already added ", doc.title);
+    return false;
+  }
+  return true;
+}
+
+
+function handleZipFiles(file){
+  fs.readFile(file, function(err, data) {
+    if (!err) {
+      var zip = new JSZip();
+      zip.loadAsync(data).then(function(contents) {
+        let zippedFiles = Object.keys(contents.files);
+        const os = require('os');
+        fs.mkdtemp(path.join(os.tmpdir(), 'tag-'), (err, folder) => {
+          if (err) {
+            console.log(err);
+            return;
+          }
+          console.log("Created temp directory: ", folder);
+          extractZipFiles(zip, zippedFiles, folder);
+        });
+      });
+    }
+  });
+}
+
+// extract the actual zip files
+function extractZipFiles(zip, zippedFiles, folder){
+  let unzippedFiles = [];
+  let ignoredFiles = [];
+  zippedFiles.forEach(function(filename) {
+    if (filename.match(/^__MACOSX/g) !== null) {
+      console.log("Ignored __MACOSX compression file: '" + filename + "'");
+      ignoredFiles.push(filename);
+    }
+    else {
+      zip.file(filename).async('nodebuffer').then(function(content) {
+        var dest = path.join(folder, filename);
+        fs.writeFileSync(dest, content);
+        console.log("Extracted file: ", dest);
+        unzippedFiles.push(dest);
+        if(unzippedFiles.length + ignoredFiles.length == zippedFiles.length) {
+          console.log("All files unzipped");
+          loadFiles(unzippedFiles);
+          removeTempFiles(unzippedFiles, folder);
+        }
+      });
+    }
+  });
+}
+
+//remove unzipped files in tempdirectory (From Zip Upload)
+function removeTempFiles(unzippedFiles, folder){
+  unzippedFiles.forEach((file) => {
+    try {
+      fs.unlinkSync(file);
+      console.log("Deleted file: ", file);
+    //file removed
+    } catch(err) {
+      console.log("Unable to delete file: ", file);
+      console.error(err);
+    }
+  });
+  try {
+    fs.rmdirSync(folder);
+    console.log("Deleted temp directory: ", folder);
+  }catch(err){
+    console.log("Unable to remove directory, ", folder);
+    console.log(err);
+  }
 }
 
 //add new document
