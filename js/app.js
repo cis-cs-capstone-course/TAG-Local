@@ -222,7 +222,7 @@ $('#label-list').on('blur', '.label-name', function () {
 
   //fix whitespace and create new label name with no spaces (class names can't have spaces)
   let newLabelName = $(this).text().trim().replace(/\s+/g, "_").replace(/<|>|&/g, '');
-  $(this).text(newLabelName);
+  $(this).text($(this).text().trim());
 
   //check if the name is the same as previous
   if (newLabelName === tagModel.currentCategory) {
@@ -230,32 +230,36 @@ $('#label-list').on('blur', '.label-name', function () {
     return;
   }
 
-  //check if user clicked off menu without first giving a label name
+  //check for whitespace
   if (newLabelName === "") {
-    console.log('Aborting: Category name was not specified');
-    deleteLabel();
-    return;
+    //check if its a new label
+    if (tagModel.currentCategory === "init") {
+      console.log('Aborting: Category name was not specified');
+      deleteLabel();
+      return;
+    }
+    else {
+      console.log("Aborting: No name entered, restoring old label name");
+      alert("Please enter a label name!");
+      $(this).text(tagModel.currentCategory);
+      return;
+    }
   }
 
   //if this label already exists
   if ((tagModel.categoryIndex(newLabelName) >= 0)) {
-    //and if there's no open document, then just delete the label
-    if (tagModel.currentDoc === null) {
+    //if its a new label, then just delete it and have user try again
+    if (tagModel.currentCategory === "init") {
       console.log('Aborting label name change: already exists: "' + newLabelName + '"');
       alert("This label already exists! Please try again.");
       deleteLabel();
       return;
     }
-    //if there is a document, check for existing annotations
+    //otherwise, its a genuine name change and we will have to restore the label name
     else {
-      var hasAnnotations = tagModel.checkIfLabelHasAnnotations(tagModel.currentCategory);
-
-      //if it has annotations, then restore the old label name
-      //if it doesnt, then we can just delete the html div and have the user start over
-      hasAnnotations ? $(this).text(tagModel.currentCategory) : deleteLabel();
-
       console.log('Aborting label name change: already exists: "' + newLabelName + '"');
       alert("This label already exists! Please try again.");
+      $(this).text(tagModel.currentCategory);
       return
     }
   }
