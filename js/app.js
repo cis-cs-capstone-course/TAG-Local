@@ -177,7 +177,7 @@ $('#add-label').on('click', function () {
 
   let label = addLabel();
   let labelName = label.children(".label-name");
-
+  console.log("The LabelName (180) : ",labelName);
   //let user type name
   labelName[0].contentEditable = true;
   labelName.focus().selectText();
@@ -568,6 +568,9 @@ function addLabel(name = 'init') {
   tagModel.currentCategory = name;
   $('#label-selected').attr('id', '');
 
+  //if we used default name, show white space, else show the name provided
+  let displayName = (name == 'init') ? '' : name;
+
   // create label div
   var newLabel = $('<div/>', {
     class: 'hoverWhite label',
@@ -582,7 +585,7 @@ function addLabel(name = 'init') {
   ).append(
     $('<div/>', {
       class: 'label-name'
-    }).text('')
+    }).text(displayName)
   );
 
   //add to label list
@@ -665,7 +668,9 @@ function loadJsonData(data, filename = "", obliterate = false) {
     tagModel.currentDoc = newDoc;
     doc.annotations.forEach(function (annotation) {
       if (tagModel.categoryIndex(annotation.label) === -1) {
-        addLabel(annotation.label);
+        console.log("Adding label (668 ): ", annotation.label);
+        let label = addLabel(annotation.label);
+
       }
       tagModel.addAnnotation(annotation.range, annotation.label);
     });
