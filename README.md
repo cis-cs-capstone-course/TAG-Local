@@ -24,7 +24,7 @@
 ## About the Project
 TAG is a text annotator that allows you to upload documents and highlight them using custom labels and highlight colors.
 
-Oh, and you can train you're own machine learning to highlight for you.
+Oh, and you can train your own machine learning model to highlight for you.
 
 
 
