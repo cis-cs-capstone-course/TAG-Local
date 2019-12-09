@@ -109,7 +109,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- AUTHORS -->
 ## Authors
 - Matthew Anthony
-- Nicolas Gonzalez
+- Nicholas Gonzalez
 - Keith Hudock
 - Tony Mark
 - Leo Vergnetti
