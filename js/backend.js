@@ -6,11 +6,11 @@ var PythonShell = require('python-shell');
 // paths to apps // please add new scripts, thx
 // var pyScript = path.join(__dirname, '/../py/hello.py');
 // var pyScriptLocal = path.join(__dirname, '/py/hello.py');
-let trainScript = path.join(__dirname, 'py', 'train.py');
+let trainScript = path.join(__dirname, '..', 'py', 'train.py');
 let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
-let annotateScript = path.join(__dirname, 'py', 'annotate.py');
+let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
-let createScript = path.join(__dirname, 'py', 'create.py');
+let createScript = path.join(__dirname, '..', 'py', 'create.py');
 let createScriptLocal = path.join(__dirname, 'py', 'create.py');
 
 // hide things supposed to be hidden
@@ -173,6 +173,10 @@ function beginAnnotating(isAllDocuments){
       return;
     }
 
+
+//CREATE DIR HERE
+
+//TODO: Add output path arg to annotations:
   var options = {
       args: ['--model', tagModel.currentModel, '--raw_data', tagModel.jsonifyData(isAllDocuments)]
   };
@@ -181,6 +185,9 @@ function beginAnnotating(isAllDocuments){
   launchPy(annotateScript, options).then(function (data) {
       pyReturn = data;
       displayAnnotations();
+
+      //TODO: Delete Temp file/dir
+
       alert('Successfully received ML annotations!');
       next();
   }).catch(function () {
@@ -188,11 +195,13 @@ function beginAnnotating(isAllDocuments){
       launchPy(annotateScriptLocal, options).then(function (data) {
           pyReturn = data;
           displayAnnotations();
+          //TODO: Delete Temp file/dir
           alert('Successfully received ML annotations (local script)!');
           next();
       }).catch(function () {
           // still didn't work
           if (!pyReturn) {
+            //TODO: Delete Temp file/dir
               alert('Something went wrong');
               return -1;
           }
@@ -287,9 +296,12 @@ launchPy = function (file, options = null) {
 //Load annoations from ML
 displayAnnotations = function() {
   const fs = require('fs');
+
+  let mlReturnPath = path.join(tagModel.currentModel, 'data.json');
+
   //read and parse json data from ml output file
-  console.log("Preparing to read data from data.json");
-  let rawContent = fs.readFileSync('data.json');
+  console.log("Preparing to read ML data from: ", mlReturnPath);
+  let rawContent = fs.readFileSync(mlReturnPath);
   let jsonContent = JSON.parse(rawContent);
   console.log("ML returned \n", jsonContent);
   //load json data

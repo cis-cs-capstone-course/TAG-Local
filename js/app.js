@@ -585,8 +585,8 @@ function extractZipFiles(zip, zippedFiles, folder){
 }
 
 //remove unzipped files in tempdirectory (From Zip Upload)
-function removeTempFiles(unzippedFiles, folder){
-  unzippedFiles.forEach((file) => {
+function removeTempFiles(files, folder){
+  files.forEach((file) => {
     try {
       fs.unlinkSync(file);
       console.log("Deleted file: ", file);

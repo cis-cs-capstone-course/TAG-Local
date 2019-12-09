@@ -2,7 +2,7 @@ import json
 import argparse
 import sys
 import spacy
-
+import os
 
 class DocumentClass:
     def __init__(self, title, text, annotations):
@@ -33,7 +33,10 @@ def main(model, raw_data):
             return_data.append(annotation.__dict__)
         docs.append(DocumentClass(d['title'], d['text'], return_data).__dict__)
         # print("Found %d entities", doc.ents.count)
-    with open('data.json', 'w') as outfile:
+    outputPath = os.path.join(model, 'data.json')
+    print("Saving to path: '%s'" % outputPath)
+    sys.stdout.flush()
+    with open(outputPath, 'w') as outfile:
         json.dump(docs, outfile)
 
 
