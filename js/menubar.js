@@ -34,46 +34,21 @@ const template = [
       },
     ]
   },
-  //{ role: 'projectMenu' }
-  {
-    label: 'Project',
-    submenu: [
-      { label: 'New Project' },
-      { label: 'Open Project' },
-      { type: 'separator' },
-      {
-        label: 'Save Project',
-        click: saveProject
-      },
-      {
-        label: 'Save Project As',
-        click: saveProjectAs
-      },
-    ]
-  },
 
   //{ role: 'documentMenu'}
   {
-    label: 'Document',
+    label: 'Documents',
     submenu: [
       {
         label: 'Import Document',
         click: getDocInput
       },
       { type: 'separator' },
-      { label: 'Export Current Document' },
+      { label: 'Export Current Document' ,
+        click: exportAsJson },
       {
-        label: 'Export All Documents',
-        submenu: [
-          {
-            label: 'As Zip',
-            click: exportZip
-          },
-          {
-            label: 'As JSON',
-            click: exportAllJson
-          }
-        ]
+        label: 'Export All Documents (Zip)',
+        click: exportAsZip
       }
     ]
   },
@@ -155,42 +130,6 @@ const template = [
 const menu = Menu.buildFromTemplate(template);
 Menu.setApplicationMenu(menu);
 
-function saveProjectAs() {
-  dialog.showSaveDialog(remote.getCurrentWindow()).then(result => {
-    console.log("Showing save as dialog");
-    if (result.filePath === undefined) {
-      console.log("You didn't save the file");
-      return;
-    }
-    if (result.canceled == true) {
-      console.log("You canceled the save");
-      return;
-    }
-    var filePath = result.filePath;
-    if (path.extname(filePath) != '.tagProj') {
-      filePath += '.tagProj';
-    }
-    tagModel.projectPath = filePath;
-    saveProject();
-  });
-}
-
-function saveProject() {
-  let filePath = tagModel.projectPath;
-  if (filePath == null) {
-    console.log("No save path detected, calling saveProjectAs");
-    saveProjectAs();
-    return;
-  }
-  console.log("saving file @ ", filePath);
-
-  fs.writeFile(filePath, JSON.stringify(tagModel), (err) => {
-    if (err) {
-      alert("An error ocurred creating the file " + err.message);
-    }
-    alert("The file has been succesfully saved");
-  });
-}
 
 function openClosePrompt() {
   dialog.showMessageBox({
@@ -198,7 +137,7 @@ function openClosePrompt() {
     message: "Do you really want to quit?"
   }).then(function (result) {
     if (result.response == 0)
-      remote.getCurrentWindow().close();
+      app.quit();
   });
 }
 
