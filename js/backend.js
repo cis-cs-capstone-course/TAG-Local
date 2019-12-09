@@ -6,11 +6,11 @@ var PythonShell = require('python-shell');
 // paths to apps // please add new scripts, thx
 // var pyScript = path.join(__dirname, '/../py/hello.py');
 // var pyScriptLocal = path.join(__dirname, '/py/hello.py');
-let trainScript = path.join(__dirname, 'py', 'train.py');
+let trainScript = path.join(__dirname, '..', 'py', 'train.py');
 let trainScriptLocal = path.join(__dirname, 'py', 'train.py');
-let annotateScript = path.join(__dirname, 'py', 'annotate.py');
+let annotateScript = path.join(__dirname, '..', 'py', 'annotate.py');
 let annotateScriptLocal = path.join(__dirname, 'py', 'annotate.py');
-let createScript = path.join(__dirname, 'py', 'create.py');
+let createScript = path.join(__dirname, '..', 'py', 'create.py');
 let createScriptLocal = path.join(__dirname, 'py', 'create.py');
 
 // hide things supposed to be hidden
